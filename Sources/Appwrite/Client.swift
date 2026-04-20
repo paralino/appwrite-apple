@@ -36,6 +36,8 @@ open class Client {
 
     internal var http: HTTPClient
 
+    internal var userDefaultsGroup: String?
+
     private static let boundaryChars = "abcdefghijklmnopqrstuvwxyz1234567890"
 
     private static let boundary = randomBoundary()
@@ -44,7 +46,8 @@ open class Client {
 
     // MARK: Methods
 
-    public init() {
+    public init(userDefaultsGroup: String?) {
+        self.userDefaultsGroup = userDefaultsGroup
         http = Client.createHTTP()
         addUserAgentHeader()
         addOriginHeader()
@@ -370,7 +373,7 @@ open class Client {
             request.headers.add(name: key, value: value)
         }
 
-        request.addDomainCookies()
+        request.addDomainCookies(userDefaultsGroup: userDefaultsGroup)
 
         if "GET" == method {
             return try await execute(request, converter: converter)
@@ -414,9 +417,10 @@ open class Client {
         case 0..<400:
             if response.headers["Set-Cookie"].count > 0 {
                 let domain = URL(string: request.url)!.host!
+                let userDefaults = (userDefaultsGroup != nil ? UserDefaults(suiteName: userDefaultsGroup) : nil) ?? UserDefaults.standard
                 let new = response.headers["Set-Cookie"]
 
-                UserDefaults.standard.set(new, forKey: domain)
+                userDefaults.set(new, forKey: domain)
             }
             switch T.self {
             case is Bool.Type:

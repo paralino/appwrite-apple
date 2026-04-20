@@ -119,7 +119,8 @@ open class Realtime : Service {
         socketClient = WebSocketClient(
             url,
             tlsEnabled: !client.selfSigned,
-            delegate: self
+            delegate: self,
+            userDefaultsGroup: client.userDefaultsGroup
         )
 
         try await socketClient?.connect()

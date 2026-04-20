@@ -24,7 +24,8 @@ public class WebSocketClient {
     let query: String
     let headers: HTTPHeaders
     let frameKey: String
-
+    let userDefaultsGroup: String?
+    
     public private(set) var maxFrameSize: Int
 
     var tlsEnabled: Bool = false
@@ -196,7 +197,8 @@ public class WebSocketClient {
         headers: HTTPHeaders = HTTPHeaders(),
         maxFrameSize: Int = 14,
         tlsEnabled: Bool = true,
-        delegate: WebSocketClientDelegate? = nil
+        delegate: WebSocketClientDelegate? = nil,
+        userDefaultsGroup: String? = nil
     ) {
         self.host = host
         self.port = port
@@ -207,6 +209,7 @@ public class WebSocketClient {
         self.maxFrameSize = maxFrameSize
         self.tlsEnabled = tlsEnabled
         self.delegate = delegate
+        self.userDefaultsGroup = userDefaultsGroup
 
         DispatchQueue.global(qos: .background).async {
             self.threadGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -222,7 +225,8 @@ public class WebSocketClient {
         _ url: String,
         tlsEnabled: Bool = true,
         headers: HTTPHeaders = HTTPHeaders(),
-        delegate: WebSocketClientDelegate? = nil
+        delegate: WebSocketClientDelegate? = nil,
+        userDefaultsGroup: String? = nil
     ) {
         let rawUrl = URL(string: url)
         self.frameKey = "tergregfgbsfdgfdsfgdbv=="
@@ -234,6 +238,7 @@ public class WebSocketClient {
         self.maxFrameSize = 24
         self.tlsEnabled = tlsEnabled
         self.delegate = delegate
+        self.userDefaultsGroup = userDefaultsGroup
 
         DispatchQueue.global(qos: .background).async {
             self.threadGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -265,8 +270,8 @@ public class WebSocketClient {
     }
 
     private func openChannel(channel: NIOCore.Channel) -> EventLoopFuture<Void> {
-        let httpHandler = HTTPHandler(client: self, headers: headers)
-
+        let httpHandler = HTTPHandler(client: self, headers: headers, userDefaultsGroup: userDefaultsGroup)
+        
         let basicUpgrader = NIOWebSocketClientUpgrader(
             requestKey: self.frameKey,
             upgradePipelineHandler: { channel, response in

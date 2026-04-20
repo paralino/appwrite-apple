@@ -10,10 +10,13 @@ class HTTPHandler {
     unowned let client: WebSocketClient
     
     let headers: HTTPHeaders
+    
+    let userDefaultsGroup: String?
 
-    init(client: WebSocketClient, headers: HTTPHeaders) {
+    init(client: WebSocketClient, headers: HTTPHeaders, userDefaultsGroup: String?) {
         self.client = client
         self.headers = headers
+        self.userDefaultsGroup = userDefaultsGroup
     }
 
     func upgradeFailure(status: HTTPResponseStatus) {
@@ -49,7 +52,7 @@ extension HTTPHandler : ChannelInboundHandler, RemovableChannelHandler {
         
         headers.add(name: "Host", value: "\(client.host):\(client.port)")
         headers.add(contentsOf: self.headers)
-        headers.addDomainCookies(for: client.host)
+        headers.addDomainCookies(for: client.host, userDefaultsGroup: userDefaultsGroup)
         let requestHead = HTTPRequestHead(
             version: .http1_1,
             method: .GET,
