@@ -26,8 +26,8 @@ open class Client {
         "x-sdk-name": "Apple",
         "x-sdk-platform": "client",
         "x-sdk-language": "apple",
-        "x-sdk-version": "16.1.0",
-        "x-appwrite-response-format": "1.9.1"
+        "x-sdk-version": "17.0.0",
+        "x-appwrite-response-format": "1.9.2"
     ]
 
     internal var config: [String: String] = [:]
@@ -358,7 +358,7 @@ open class Client {
         headers: [String: String] = [:],
         params: [String: Any?] = [:],
         sink: ((ByteBuffer) -> Void)? = nil,
-        converter: ((Any) -> T)? = nil
+        converter: ((Any) throws -> T)? = nil
     ) async throws -> T {
         let validParams = params.filter { $0.value != nil }
 
@@ -398,7 +398,7 @@ open class Client {
     private func execute<T>(
         _ request: HTTPClientRequest,
         withSink bufferSink: ((ByteBuffer) -> Void)? = nil,
-        converter: ((Any) -> T)? = nil
+        converter: ((Any) throws -> T)? = nil
     ) async throws -> T {
         let response = try await http.execute(
             request,
@@ -435,7 +435,11 @@ open class Client {
                 }
                 let dict = try JSONSerialization.jsonObject(with: Data(data.readableBytesView)) as? [String: Any]
 
-                return converter?(dict!) ?? dict! as! T
+                if let converter = converter {
+                    return try converter(dict!)
+                }
+
+                return dict! as! T
             }
         default:
             var message = ""
@@ -468,7 +472,7 @@ open class Client {
         params: inout [String: Any?],
         paramName: String,
         idParamName: String? = nil,
-        converter: ((Any) -> T)? = nil,
+        converter: ((Any) throws -> T)? = nil,
         onProgress: ((UploadProgress) -> Void)? = nil
     ) async throws -> T {
         let input = params[paramName] as! InputFile
@@ -541,7 +545,7 @@ open class Client {
             ))
         }
 
-        return converter!(result)
+        return try converter!(result)
     }
 
     private static func randomBoundary() -> String {
