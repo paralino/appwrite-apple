@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:6.0
 
 import PackageDescription
 
@@ -6,9 +6,9 @@ let package = Package(
     name: "Appwrite",
     platforms: [
         .iOS("15.0"),
-        .macOS("11.0"),
-        .watchOS("7.0"),
-        .tvOS("13.0"),
+        .macOS("12.0"),
+        .watchOS("8.0"),
+        .tvOS("15.0"),
     ],
     products: [
         .library(
@@ -23,7 +23,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../async-http-client"),
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.58.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.94.0"),
     ],
     targets: [
         .target(

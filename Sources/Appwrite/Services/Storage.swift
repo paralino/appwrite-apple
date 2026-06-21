@@ -35,7 +35,10 @@ open class Storage: Service {
             "total": total
         ]
 
-        let apiHeaders: [String: String] = [:]
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json"
+        ]
 
         let converter: (Any) throws -> AppwriteModels.FileList = { response in
             return AppwriteModels.FileList.from(map: response as! [String: Any])
@@ -95,7 +98,9 @@ open class Storage: Service {
         ]
 
         var apiHeaders: [String: String] = [
-            "content-type": "multipart/form-data"
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "multipart/form-data",
+            "accept": "application/json"
         ]
 
         let converter: (Any) throws -> AppwriteModels.File = { response in
@@ -135,7 +140,10 @@ open class Storage: Service {
 
         let apiParams: [String: Any] = [:]
 
-        let apiHeaders: [String: String] = [:]
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json"
+        ]
 
         let converter: (Any) throws -> AppwriteModels.File = { response in
             return AppwriteModels.File.from(map: response as! [String: Any])
@@ -178,7 +186,9 @@ open class Storage: Service {
         ]
 
         let apiHeaders: [String: String] = [
-            "content-type": "application/json"
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json"
         ]
 
         let converter: (Any) throws -> AppwriteModels.File = { response in
@@ -215,6 +225,7 @@ open class Storage: Service {
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json"
         ]
 
@@ -306,7 +317,7 @@ open class Storage: Service {
         let apiParams: [String: Any?] = [
             "width": width,
             "height": height,
-            "gravity": gravity,
+            "gravity": gravity?.rawValue,
             "quality": quality,
             "borderWidth": borderWidth,
             "borderColor": borderColor,
@@ -314,7 +325,7 @@ open class Storage: Service {
             "opacity": opacity,
             "rotation": rotation,
             "background": background,
-            "output": output,
+            "output": output?.rawValue,
             "token": token,
             "project": client.config["project"]
         ]

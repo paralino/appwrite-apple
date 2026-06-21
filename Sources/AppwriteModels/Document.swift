@@ -12,7 +12,7 @@ open class Document<T : Codable>: Codable {
         case createdAt = "$createdAt"
         case updatedAt = "$updatedAt"
         case permissions = "$permissions"
-        case data
+        case data = "data"
     }
 
     /// Document ID.
@@ -87,7 +87,7 @@ open class Document<T : Codable>: Codable {
             "$createdAt": createdAt as Any,
             "$updatedAt": updatedAt as Any,
             "$permissions": permissions as Any,
-            "data": try! JSONEncoder().encode(data)
+            "data": (try! JSONSerialization.jsonObject(with: JSONEncoder().encode(data))) as? [String: Any] ?? [:]
         ]
     }
 

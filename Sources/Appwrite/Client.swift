@@ -16,6 +16,7 @@ open class Client {
 
     // MARK: Properties
     public static var chunkSize = 5 * 1024 * 1024 // 5MB
+    public static var maxConcurrentUploads = 8
 
     open var endPoint = "https://cloud.appwrite.io/v1"
 
@@ -26,13 +27,17 @@ open class Client {
         "x-sdk-name": "Apple",
         "x-sdk-platform": "client",
         "x-sdk-language": "apple",
-        "x-sdk-version": "17.0.0",
-        "x-appwrite-response-format": "1.9.2"
+        "x-sdk-version": "18.1.0",
+        "x-appwrite-response-format": "1.9.5"
     ]
 
     internal var config: [String: String] = [:]
 
     internal var selfSigned: Bool = false
+
+    internal var compression: Bool = true
+
+    internal var compressionHeaderInjected: Bool = false
 
     internal var http: HTTPClient
 
@@ -55,6 +60,7 @@ open class Client {
 
     private static func createHTTP(
         selfSigned: Bool = false,
+        compression: Bool = true,
         maxRedirects: Int = 5,
         alloweRedirectCycles: Bool = false,
         connectTimeout: TimeAmount = .seconds(30),
@@ -81,7 +87,7 @@ open class Client {
                 tlsConfiguration: tls,
                 redirectConfiguration: redirect,
                 timeout: timeout,
-                decompression: .enabled(limit: .none)
+                decompression: compression ? .enabled(limit: .none) : .disabled
             )
         )
     }
@@ -105,7 +111,6 @@ open class Client {
     ///
     open func setProject(_ value: String) -> Client {
         config["project"] = value
-        _ = addHeader(key: "X-Appwrite-Project", value: value)
         return self
     }
 
@@ -168,6 +173,21 @@ open class Client {
     }
 
     ///
+    /// Set Cookie
+    ///
+    /// The user cookie to authenticate with. Used by SDKs that forward an incoming Cookie header in server-side runtimes.
+    ///
+    /// @param String value
+    ///
+    /// @return Client
+    ///
+    open func setCookie(_ value: String) -> Client {
+        config["cookie"] = value
+        _ = addHeader(key: "Cookie", value: value)
+        return self
+    }
+
+    ///
     /// Set ImpersonateUserId
     ///
     /// Impersonate a user by ID on an already user-authenticated request. Requires the current request to be authenticated as a user with impersonator capability; X-Appwrite-Key alone is not sufficient. Impersonator users are intentionally granted users.read so they can discover a target before impersonation begins. Internal audit logs still attribute actions to the original impersonator and record the impersonated target only in internal audit payload data.
@@ -223,7 +243,37 @@ open class Client {
     open func setSelfSigned(_ status: Bool = true) -> Client {
         self.selfSigned = status
         try! http.syncShutdown()
-        http = Client.createHTTP(selfSigned: status)
+        http = Client.createHTTP(selfSigned: status, compression: compression)
+        return self
+    }
+
+    ///
+    /// Enable or disable automatic response decompression.
+    ///
+    /// When disabled, the client asks the server for an identity response
+    /// encoding and does not attempt to decompress response bodies. This can
+    /// be useful when a server or proxy returns compressed responses that the
+    /// underlying HTTP client cannot decode.
+    ///
+    /// @param Bool status Whether response decompression should be enabled.
+    ///
+    /// @return Client The same client instance.
+    ///
+    open func setCompression(_ status: Bool = true) -> Client {
+        self.compression = status
+
+        if status {
+            if compressionHeaderInjected && self.headers["accept-encoding"] == "identity" {
+                self.headers.removeValue(forKey: "accept-encoding")
+            }
+            self.compressionHeaderInjected = false
+        } else {
+            self.headers["accept-encoding"] = "identity"
+            self.compressionHeaderInjected = true
+        }
+
+        try! http.syncShutdown()
+        http = Client.createHTTP(selfSigned: selfSigned, compression: status)
         return self
     }
 
@@ -272,6 +322,10 @@ open class Client {
     /// @return Client
     ///
     open func addHeader(key: String, value: String) -> Client {
+        if key.caseInsensitiveCompare("accept-encoding") == .orderedSame {
+            self.compressionHeaderInjected = false
+        }
+
         self.headers[key] = value
         return self
     }
@@ -332,7 +386,8 @@ open class Client {
        let apiPath: String = "/ping"
 
        let apiHeaders: [String: String] = [
-           "content-type": "application/json"
+           "content-type": "application/json",
+           "X-Appwrite-Project": config["project"] ?? ""
        ]
 
        return try await call(
@@ -363,7 +418,7 @@ open class Client {
         let validParams = params.filter { $0.value != nil }
 
         let queryParameters = method == "GET" && !validParams.isEmpty
-            ? "?" + parametersToQueryString(params: validParams)
+            ? (path.contains("?") ? "&" : "?") + parametersToQueryString(params: validParams)
             : ""
 
         var request = HTTPClientRequest(url: endPoint + path + queryParameters)
@@ -501,6 +556,7 @@ open class Client {
 
         var offset = 0
         var result = [String:Any]()
+        var uploadId = idParamName != nil ? params[idParamName!] as? String : nil
 
         if idParamName != nil {
             // Make a request to check if a file already exists
@@ -514,36 +570,112 @@ open class Client {
                 )
                 let chunksUploaded = map["chunksUploaded"] as! Int
                 offset = chunksUploaded * Client.chunkSize
+                result = map
             } catch {
                 // File does not exist yet, swallow exception
             }
         }
 
-        while offset < size {
-            let slice = (input.data as! ByteBuffer).getSlice(at: offset, length: Client.chunkSize)
-                ?? (input.data as! ByteBuffer).getSlice(at: offset, length: Int(size - offset))
+        let totalChunks = Int(ceil(Double(size) / Double(Client.chunkSize)))
+        var nextChunk = offset / Client.chunkSize
+        var completedChunks = nextChunk
+        var uploadedBytes = min(offset, size)
+        var completedResponse: [String: Any]? = nil
+        var lastChunkResponse: [String: Any]? = nil
+        let baseParams = params
+        let baseHeaders = headers
 
-            params[paramName] = InputFile.fromBuffer(slice!, filename: input.filename, mimeType: input.mimeType)
-            headers["content-range"] = "bytes \(offset)-\(min((offset + Client.chunkSize) - 1, size - 1))/\(size)"
+        func isUploadComplete(_ response: [String: Any]) -> Bool {
+            guard let chunksUploaded = response["chunksUploaded"] as? Int else {
+                return false
+            }
 
-            result = try await call(
+            let chunksTotal = response["chunksTotal"] as? Int ?? totalChunks
+            return chunksUploaded >= chunksTotal
+        }
+
+        func uploadChunk(index: Int, uploadId: String?) async throws -> (Int, Int, [String: Any]) {
+            let chunkOffset = index * Client.chunkSize
+            let chunkLength = min(Client.chunkSize, size - chunkOffset)
+            guard let slice = (input.data as! ByteBuffer).getSlice(at: chunkOffset, length: chunkLength) else {
+                throw AppwriteError(message: "Failed to read upload chunk")
+            }
+            var chunkParams = baseParams
+            var chunkHeaders = baseHeaders
+            chunkParams[paramName] = InputFile.fromBuffer(slice, filename: input.filename, mimeType: input.mimeType)
+            chunkHeaders["content-range"] = "bytes \(chunkOffset)-\(chunkOffset + chunkLength - 1)/\(size)"
+            if let uploadId = uploadId {
+                chunkHeaders["x-appwrite-id"] = uploadId
+            }
+
+            let chunkResult = try await call(
                 method: "POST",
                 path: path,
-                headers: headers,
-                params: params,
+                headers: chunkHeaders,
+                params: chunkParams,
                 converter: { return $0 as! [String: Any] }
             )
 
-            offset += Client.chunkSize
-            headers["x-appwrite-id"] = result["$id"] as? String
+            return (index, chunkLength, chunkResult)
+        }
+
+        if nextChunk == 0 {
+            let first = try await uploadChunk(index: 0, uploadId: uploadId)
+            result = first.2
+            uploadId = result["$id"] as? String
+            nextChunk = 1
+            completedChunks = 1
+            uploadedBytes = first.1
             onProgress?(UploadProgress(
-                id: result["$id"] as? String ?? "",
-                progress: Double(min(offset, size))/Double(size) * 100.0,
-                sizeUploaded: min(offset, size),
-                chunksTotal: result["chunksTotal"] as? Int ?? -1,
-                chunksUploaded: result["chunksUploaded"] as? Int ?? -1
+                id: uploadId ?? "",
+                progress: Double(uploadedBytes)/Double(size) * 100.0,
+                sizeUploaded: uploadedBytes,
+                chunksTotal: result["chunksTotal"] as? Int ?? totalChunks,
+                chunksUploaded: result["chunksUploaded"] as? Int ?? completedChunks
             ))
         }
+
+        let maxConcurrency = Client.maxConcurrentUploads
+
+        try await withThrowingTaskGroup(of: (Int, Int, [String: Any]).self) { group in
+            var inFlight = 0
+
+            while inFlight < maxConcurrency && nextChunk < totalChunks {
+                let index = nextChunk
+                let currentUploadId = uploadId
+                group.addTask { try await uploadChunk(index: index, uploadId: currentUploadId) }
+                nextChunk += 1
+                inFlight += 1
+            }
+
+            while let chunk = try await group.next() {
+                inFlight -= 1
+                completedChunks += 1
+                uploadedBytes += chunk.1
+                lastChunkResponse = chunk.2
+                if isUploadComplete(chunk.2) {
+                    completedResponse = chunk.2
+                }
+
+                onProgress?(UploadProgress(
+                    id: uploadId ?? "",
+                    progress: Double(min(uploadedBytes, size))/Double(size) * 100.0,
+                    sizeUploaded: min(uploadedBytes, size),
+                    chunksTotal: chunk.2["chunksTotal"] as? Int ?? totalChunks,
+                    chunksUploaded: chunk.2["chunksUploaded"] as? Int ?? completedChunks
+                ))
+
+                while inFlight < maxConcurrency && nextChunk < totalChunks {
+                    let index = nextChunk
+                    let currentUploadId = uploadId
+                    group.addTask { try await uploadChunk(index: index, uploadId: currentUploadId) }
+                    nextChunk += 1
+                    inFlight += 1
+                }
+            }
+        }
+
+        result = completedResponse ?? lastChunkResponse ?? result
 
         return try converter!(result)
     }

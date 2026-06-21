@@ -308,7 +308,7 @@ open class Avatars: Service {
     ///   - viewportWidth: Int (optional)
     ///   - viewportHeight: Int (optional)
     ///   - scale: Double (optional)
-    ///   - theme: AppwriteEnums.Theme (optional)
+    ///   - theme: AppwriteEnums.BrowserTheme (optional)
     ///   - userAgent: String (optional)
     ///   - fullpage: Bool (optional)
     ///   - locale: String (optional)
@@ -332,7 +332,7 @@ open class Avatars: Service {
         viewportWidth: Int? = nil,
         viewportHeight: Int? = nil,
         scale: Double? = nil,
-        theme: AppwriteEnums.Theme? = nil,
+        theme: AppwriteEnums.BrowserTheme? = nil,
         userAgent: String? = nil,
         fullpage: Bool? = nil,
         locale: String? = nil,
@@ -356,21 +356,21 @@ open class Avatars: Service {
             "viewportWidth": viewportWidth,
             "viewportHeight": viewportHeight,
             "scale": scale,
-            "theme": theme,
+            "theme": theme?.rawValue,
             "userAgent": userAgent,
             "fullpage": fullpage,
             "locale": locale,
-            "timezone": timezone,
+            "timezone": timezone?.rawValue,
             "latitude": latitude,
             "longitude": longitude,
             "accuracy": accuracy,
             "touch": touch,
-            "permissions": permissions,
+            "permissions": permissions?.map { $0.rawValue },
             "sleep": sleep,
             "width": width,
             "height": height,
             "quality": quality,
-            "output": output,
+            "output": output?.rawValue,
             "project": client.config["project"]
         ]
 

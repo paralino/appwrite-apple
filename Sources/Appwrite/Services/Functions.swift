@@ -32,7 +32,10 @@ open class Functions: Service {
             "total": total
         ]
 
-        let apiHeaders: [String: String] = [:]
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json"
+        ]
 
         let converter: (Any) throws -> AppwriteModels.ExecutionList = { response in
             return AppwriteModels.ExecutionList.from(map: response as! [String: Any])
@@ -80,13 +83,15 @@ open class Functions: Service {
             "body": body,
             "async": async,
             "path": path,
-            "method": method,
+            "method": method?.rawValue,
             "headers": headers,
             "scheduledAt": scheduledAt
         ]
 
         let apiHeaders: [String: String] = [
-            "content-type": "application/json"
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json"
         ]
 
         let converter: (Any) throws -> AppwriteModels.Execution = { response in
@@ -121,7 +126,10 @@ open class Functions: Service {
 
         let apiParams: [String: Any] = [:]
 
-        let apiHeaders: [String: String] = [:]
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json"
+        ]
 
         let converter: (Any) throws -> AppwriteModels.Execution = { response in
             return AppwriteModels.Execution.from(map: response as! [String: Any])
