@@ -60,15 +60,15 @@ open class Subscriber: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.id = try container.decode(String.self, forKey: .id)
-        self.createdAt = try container.decode(String.self, forKey: .createdAt)
-        self.updatedAt = try container.decode(String.self, forKey: .updatedAt)
-        self.targetId = try container.decode(String.self, forKey: .targetId)
+        self.id = try container.contains(.id) ? container.decode(String.self, forKey: .id) : ""
+        self.createdAt = try container.contains(.createdAt) ? container.decode(String.self, forKey: .createdAt) : ""
+        self.updatedAt = try container.contains(.updatedAt) ? container.decode(String.self, forKey: .updatedAt) : ""
+        self.targetId = try container.contains(.targetId) ? container.decode(String.self, forKey: .targetId) : ""
         self.target = try container.decode(Target.self, forKey: .target)
-        self.userId = try container.decode(String.self, forKey: .userId)
-        self.userName = try container.decode(String.self, forKey: .userName)
-        self.topicId = try container.decode(String.self, forKey: .topicId)
-        self.providerType = try container.decode(String.self, forKey: .providerType)
+        self.userId = try container.contains(.userId) ? container.decode(String.self, forKey: .userId) : ""
+        self.userName = try container.contains(.userName) ? container.decode(String.self, forKey: .userName) : ""
+        self.topicId = try container.contains(.topicId) ? container.decode(String.self, forKey: .topicId) : ""
+        self.providerType = try container.contains(.providerType) ? container.decode(String.self, forKey: .providerType) : ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -95,11 +95,23 @@ open class Subscriber: Codable {
             "userId": userId as Any,
             "userName": userName as Any,
             "topicId": topicId as Any,
-            "providerType": providerType as Any
+            "providerType": providerType as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> Subscriber {
+    public static func from(map: [String: Any]) -> Subscriber {
+        let defaults: [String: Any] = [
+            "$id": "",
+            "$createdAt": "",
+            "$updatedAt": "",
+            "targetId": "",
+            "userId": "",
+            "userName": "",
+            "topicId": "",
+            "providerType": "",
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return Subscriber(
             id: map["$id"] as! String,
             createdAt: map["$createdAt"] as! String,

@@ -2,7 +2,7 @@ import Foundation
 import JSONCodable
 
 /// Team
-open class Team<T : Codable>: Codable {
+open class Team<T: Codable>: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id = "$id"
@@ -45,11 +45,11 @@ open class Team<T : Codable>: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.id = try container.decode(String.self, forKey: .id)
-        self.createdAt = try container.decode(String.self, forKey: .createdAt)
-        self.updatedAt = try container.decode(String.self, forKey: .updatedAt)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.total = try container.decode(Int.self, forKey: .total)
+        self.id = try container.contains(.id) ? container.decode(String.self, forKey: .id) : ""
+        self.createdAt = try container.contains(.createdAt) ? container.decode(String.self, forKey: .createdAt) : ""
+        self.updatedAt = try container.contains(.updatedAt) ? container.decode(String.self, forKey: .updatedAt) : ""
+        self.name = try container.contains(.name) ? container.decode(String.self, forKey: .name) : ""
+        self.total = try container.contains(.total) ? container.decode(Int.self, forKey: .total) : 0
         self.prefs = try container.decode(Preferences<T>.self, forKey: .prefs)
     }
 
@@ -71,11 +71,20 @@ open class Team<T : Codable>: Codable {
             "$updatedAt": updatedAt as Any,
             "name": name as Any,
             "total": total as Any,
-            "prefs": prefs.toMap() as Any
+            "prefs": prefs.toMap() as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> Team {
+    public static func from(map: [String: Any]) -> Team {
+        let defaults: [String: Any] = [
+            "$id": "",
+            "$createdAt": "",
+            "$updatedAt": "",
+            "name": "",
+            "total": 0,
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return Team(
             id: map["$id"] as! String,
             createdAt: map["$createdAt"] as! String,

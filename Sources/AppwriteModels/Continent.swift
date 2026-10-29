@@ -25,8 +25,8 @@ open class Continent: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.name = try container.decode(String.self, forKey: .name)
-        self.code = try container.decode(String.self, forKey: .code)
+        self.name = try container.contains(.name) ? container.decode(String.self, forKey: .name) : ""
+        self.code = try container.contains(.code) ? container.decode(String.self, forKey: .code) : ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -39,11 +39,17 @@ open class Continent: Codable {
     public func toMap() -> [String: Any] {
         return [
             "name": name as Any,
-            "code": code as Any
+            "code": code as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> Continent {
+    public static func from(map: [String: Any]) -> Continent {
+        let defaults: [String: Any] = [
+            "name": "",
+            "code": "",
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return Continent(
             name: map["name"] as! String,
             code: map["code"] as! String

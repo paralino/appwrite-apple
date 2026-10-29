@@ -1,9 +1,9 @@
-import Foundation
 import AsyncHTTPClient
+import Foundation
 import NIO
 import NIOHTTP1
 
-open class Realtime : Service {
+open class Realtime: Service {
 
     // Diagnostic messages go to stderr so they don't interleave with any stdout
     // the host process may be asserting on (e.g. SDK integration tests).
@@ -15,7 +15,7 @@ open class Realtime : Service {
     private let TYPE_EVENT = "event"
     private let TYPE_PONG = "pong"
     private let DEBOUNCE_NANOS = 1_000_000
-    private let HEARTBEAT_INTERVAL: UInt64 = 20_000_000_000 // 20 seconds in nanoseconds
+    private let HEARTBEAT_INTERVAL: UInt64 = 20_000_000_000  // 20 seconds in nanoseconds
 
     private var socketClient: WebSocketClient? = nil
     private var activeSubscriptions = [String: RealtimeCallback]()
@@ -41,7 +41,7 @@ open class Realtime : Service {
     private var subCallDepth = 0
     private var reconnectAttempts = 0
     private var reconnect = true
-    
+
     private var onErrorCallbacks: [((Swift.Error?, HTTPResponseStatus?) -> Void)] = []
     private var onCloseCallbacks: [(() -> Void)] = []
     private var onOpenCallbacks: [(() -> Void)] = []
@@ -49,11 +49,11 @@ open class Realtime : Service {
     public func onError(_ callback: @escaping (Swift.Error?, HTTPResponseStatus?) -> Void) {
         self.onErrorCallbacks.append(callback)
     }
-    
+
     public func onClose(_ callback: @escaping () -> Void) {
         self.onCloseCallbacks.append(callback)
     }
-    
+
     public func onOpen(_ callback: @escaping () -> Void) {
         self.onOpenCallbacks.append(callback)
     }
@@ -124,7 +124,7 @@ open class Realtime : Service {
 
         let url = "\(client.endPointRealtime!)/realtime?\(queryParams)"
 
-        if (socketClient != nil) {
+        if socketClient != nil {
             reconnect = false
             try await closeSocket()
         }
@@ -140,9 +140,10 @@ open class Realtime : Service {
             headers.add(name: "x-appwrite-jwt", value: jwt)
         }
 
+        reconnect = true
         socketClient = WebSocketClient(
             url,
-            tlsEnabled: !client.selfSigned,
+            selfSigned: client.selfSigned,
             headers: headers,
             delegate: self,
             userDefaultsGroup: client.userDefaultsGroup
@@ -171,10 +172,11 @@ open class Realtime : Service {
         }
         let payload: [String: Any] = [
             "type": "unsubscribe",
-            "data": ids.map { ["subscriptionId": $0] }
+            "data": ids.map { ["subscriptionId": $0] },
         ]
         if let data = try? JSONSerialization.data(withJSONObject: payload),
-           let text = String(data: data, encoding: .utf8) {
+            let text = String(data: data, encoding: .utf8)
+        {
             ws.send(text: text)
         }
     }
@@ -199,7 +201,7 @@ open class Realtime : Service {
         pendingSubscribes[subscriptionId] = [
             "subscriptionId": subscriptionId,
             "channels": Array(subscription.channels),
-            "queries": subscription.queries
+            "queries": subscription.queries,
         ]
     }
 
@@ -262,23 +264,25 @@ open class Realtime : Service {
 
         let payload: [String: Any] = [
             "type": "subscribe",
-            "data": rows
+            "data": rows,
         ]
         if let data = try? JSONSerialization.data(withJSONObject: payload),
-           let text = String(data: data, encoding: .utf8) {
+            let text = String(data: data, encoding: .utf8)
+        {
             ws.send(text: text)
         }
     }
 
     private func closeSocket() async throws {
         stopHeartbeat()
-        
+
         guard let client = socketClient,
-              let group = client.threadGroup else {
+            let group = client.threadGroup
+        else {
             return
         }
 
-        if (client.isConnected) {
+        if client.isConnected {
             let promise = group.any().makePromise(of: Void.self)
             client.close(promise: promise)
             try await promise.futureResult.get()
@@ -296,10 +300,8 @@ open class Realtime : Service {
         }
     }
 
-    /**
-     * Convert channel value to string
-     * All Channel instances and String conform to ChannelValue
-     */
+    /// Convert channel value to string
+    /// All Channel instances and String conform to ChannelValue
     private func channelToString(_ channel: ChannelValue) -> String {
         return channel.toString()
     }
@@ -371,10 +373,11 @@ open class Realtime : Service {
         }
         let payload: [String: Any] = [
             "type": "presence",
-            "data": payloadData
+            "data": payloadData,
         ]
         guard let jsonData = try? JSONSerialization.data(withJSONObject: payload),
-              let text = String(data: jsonData, encoding: .utf8) else {
+            let text = String(data: jsonData, encoding: .utf8)
+        else {
             throw AppwriteError(message: "Failed to encode presence payload")
         }
         ws.send(text: text)
@@ -406,7 +409,7 @@ open class Realtime : Service {
         )
     }
 
-    public func subscribe<T : Codable>(
+    public func subscribe<T: Codable>(
         channel: ChannelValue,
         payloadType: T.Type,
         callback: @escaping (RealtimeResponseEvent) -> Void,
@@ -420,7 +423,7 @@ open class Realtime : Service {
         )
     }
 
-    public func subscribe<T : Codable>(
+    public func subscribe<T: Codable>(
         channels: [ChannelValue],
         payloadType: T.Type,
         callback: @escaping (RealtimeResponseEvent) -> Void,
@@ -434,7 +437,7 @@ open class Realtime : Service {
         )
     }
 
-    public func subscribe<T : Codable>(
+    public func subscribe<T: Codable>(
         channels: Set<String>,
         payloadType: T.Type,
         queries: [String] = [],
@@ -548,7 +551,7 @@ extension Realtime: WebSocketClientDelegate {
         onOpenCallbacks.forEach { $0() }
         startHeartbeat()
     }
-    
+
     private func handleResponseConnected(from json: [String: Any]) {
         guard json["data"] is [String: Any] else {
             return
@@ -567,10 +570,11 @@ extension Realtime: WebSocketClientDelegate {
     public func onMessage(text: String) {
         let data = Data(text.utf8)
         guard let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-              let type = json["type"] as? String else {
+            let type = json["type"] as? String
+        else {
             return
         }
-        
+
         switch type {
         case TYPE_ERROR:
             do {
@@ -589,26 +593,40 @@ extension Realtime: WebSocketClientDelegate {
         }
     }
 
-    public func onClose(channel: NIO.Channel, data: Data) async throws {
+    public func onClose(channel: NIO.Channel, data: Data) {
         connectSync.sync { appConnected = false }
         stopHeartbeat()
 
         onCloseCallbacks.forEach { $0() }
 
-        if (!reconnect) {
+        if !reconnect {
             reconnect = true
             return
         }
 
+        scheduleReconnect()
+    }
+
+    private func scheduleReconnect() {
         let timeout = getTimeout()
 
         Realtime.logDiagnostic("Realtime disconnected. Re-connecting in \(timeout / 1000) seconds.")
 
-        try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000))
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000))
 
-        self.reconnectAttempts += 1
+            guard let self = self else { return }
+            self.reconnectAttempts += 1
 
-        try await self.createSocket()
+            do {
+                try await self.createSocket()
+            } catch {
+                Realtime.logDiagnostic("Realtime reconnect failed: \(error.localizedDescription)")
+                if !self.isTornDown() {
+                    self.scheduleReconnect()
+                }
+            }
+        }
     }
 
     public func onError(error: Swift.Error?, status: HTTPResponseStatus?) {
@@ -626,10 +644,11 @@ extension Realtime: WebSocketClientDelegate {
 
     func handleResponseEvent(from json: [String: Any]) {
         guard let data = json["data"] as? [String: Any],
-              let channels = data["channels"] as? [String],
-              let events = data["events"] as? [String],
-              let payload = data["payload"] as? [String: Any],
-              let subscriptions = data["subscriptions"] as? [String] else {
+            let channels = data["channels"] as? [String],
+            let events = data["events"] as? [String],
+            let payload = data["payload"] as? [String: Any],
+            let subscriptions = data["subscriptions"] as? [String]
+        else {
             return
         }
 

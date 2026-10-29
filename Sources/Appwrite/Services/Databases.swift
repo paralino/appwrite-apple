@@ -1,9 +1,9 @@
-import AsyncHTTPClient
-import Foundation
-import NIO
-import JSONCodable
 import AppwriteEnums
 import AppwriteModels
+import AsyncHTTPClient
+import Foundation
+import JSONCodable
+import NIO
 
 /// The Databases service allows you to create structured collections of documents, query and filter lists of documents
 open class Databases: Service {
@@ -13,22 +13,25 @@ open class Databases: Service {
     ///
     /// - Parameters:
     ///   - queries: [String] (optional)
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.TransactionList
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `TablesDB.listTransactions` instead.")
     open func listTransactions(
-        queries: [String]? = nil
+        queries: [String]? = nil,
+        total: Bool? = nil
     ) async throws -> AppwriteModels.TransactionList {
         let apiPath: String = "/databases/transactions"
 
         let apiParams: [String: Any?] = [
-            "queries": queries
+            "queries": queries,
+            "total": total,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.TransactionList = { response in
@@ -43,7 +46,6 @@ open class Databases: Service {
             converter: converter
         )
     }
-
     ///
     /// Create a new transaction.
     ///
@@ -65,7 +67,7 @@ open class Databases: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -80,7 +82,6 @@ open class Databases: Service {
             converter: converter
         )
     }
-
     ///
     /// Get a transaction by its unique ID.
     ///
@@ -93,14 +94,18 @@ open class Databases: Service {
     open func getTransaction(
         transactionId: String
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/databases/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -115,7 +120,6 @@ open class Databases: Service {
             converter: converter
         )
     }
-
     ///
     /// Update a transaction, to either commit or roll back its operations.
     ///
@@ -132,18 +136,22 @@ open class Databases: Service {
         commit: Bool? = nil,
         rollback: Bool? = nil
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/databases/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any?] = [
             "commit": commit,
-            "rollback": rollback
+            "rollback": rollback,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -158,7 +166,6 @@ open class Databases: Service {
             converter: converter
         )
     }
-
     ///
     /// Delete a transaction by its unique ID.
     ///
@@ -171,39 +178,48 @@ open class Databases: Service {
     open func deleteTransaction(
         transactionId: String
     ) async throws -> Any {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/databases/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Create multiple operations in a single transaction.
     ///
     /// - Parameters:
     ///   - transactionId: String
-    ///   - operations: [Any] (optional)
+    ///   - operations: [AnyCodable] (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Transaction
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `TablesDB.createOperations` instead.")
     open func createOperations(
         transactionId: String,
-        operations: [Any]? = nil
+        operations: [AnyCodable]? = nil
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/databases/transactions/{transactionId}/operations"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any?] = [
             "operations": operations
@@ -212,7 +228,7 @@ open class Databases: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -227,10 +243,18 @@ open class Databases: Service {
             converter: converter
         )
     }
-
     ///
     /// Get a list of all the user's documents in a given collection. You can use
     /// the query params to filter your results.
+    ///
+    /// Documents returned by aggregate, groupBy or distinct queries hold only the
+    /// attributes they select, group or aggregate, typed as a document types them,
+    /// with a joined attribute named by its join alias (`alias.attribute`). The
+    /// response omits their `$id`, `$sequence`, `$createdAt`, `$updatedAt`,
+    /// `$permissions`, `$databaseId` and `$collectionId` unless they select or
+    /// group it, and those of a right or full join document that no document of
+    /// this collection matched. SDK document models fill omitted system attributes
+    /// with empty values.
     ///
     /// - Parameters:
     ///   - databaseId: String
@@ -252,20 +276,27 @@ open class Databases: Service {
         ttl: Int? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.DocumentList<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
 
         let apiParams: [String: Any?] = [
             "queries": queries,
             "transactionId": transactionId,
             "total": total,
-            "ttl": ttl
+            "ttl": ttl,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.DocumentList<T> = { response in
@@ -284,6 +315,15 @@ open class Databases: Service {
     ///
     /// Get a list of all the user's documents in a given collection. You can use
     /// the query params to filter your results.
+    ///
+    /// Documents returned by aggregate, groupBy or distinct queries hold only the
+    /// attributes they select, group or aggregate, typed as a document types them,
+    /// with a joined attribute named by its join alias (`alias.attribute`). The
+    /// response omits their `$id`, `$sequence`, `$createdAt`, `$updatedAt`,
+    /// `$permissions`, `$databaseId` and `$collectionId` unless they select or
+    /// group it, and those of a right or full join document that no document of
+    /// this collection matched. SDK document models fill omitted system attributes
+    /// with empty values.
     ///
     /// - Parameters:
     ///   - databaseId: String
@@ -314,7 +354,6 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Create a new Document. Before using this route, you should create a new
     /// collection resource using either a [server
@@ -341,21 +380,28 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
 
         let apiParams: [String: Any?] = [
             "documentId": documentId,
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -406,7 +452,104 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
+    ///
+    /// Get a list of all the user's documents in a given collection using a POST
+    /// request. This behaves identically to the list documents endpoint but
+    /// accepts the queries in the request body, allowing much larger `queries`
+    /// arrays than can fit in a URL query string.
+    ///
+    /// - Parameters:
+    ///   - databaseId: String
+    ///   - collectionId: String
+    ///   - queries: [String] (optional)
+    ///   - transactionId: String (optional)
+    ///   - total: Bool (optional)
+    ///   - ttl: Int (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.DocumentList<T>
+    ///
+    @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `TablesDB.createQuery` instead.")
+    open func createQuery<T>(
+        databaseId: String,
+        collectionId: String,
+        queries: [String]? = nil,
+        transactionId: String? = nil,
+        total: Bool? = nil,
+        ttl: Int? = nil,
+        nestedType: T.Type
+    ) async throws -> AppwriteModels.DocumentList<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
 
+        let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/query"
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+
+        let apiParams: [String: Any?] = [
+            "queries": queries,
+            "transactionId": transactionId,
+            "total": total,
+            "ttl": ttl,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.DocumentList<T> = { response in
+            return AppwriteModels.DocumentList.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+
+    ///
+    /// Get a list of all the user's documents in a given collection using a POST
+    /// request. This behaves identically to the list documents endpoint but
+    /// accepts the queries in the request body, allowing much larger `queries`
+    /// arrays than can fit in a URL query string.
+    ///
+    /// - Parameters:
+    ///   - databaseId: String
+    ///   - collectionId: String
+    ///   - queries: [String] (optional)
+    ///   - transactionId: String (optional)
+    ///   - total: Bool (optional)
+    ///   - ttl: Int (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.DocumentList<T>
+    ///
+    @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `TablesDB.createQuery` instead.")
+    open func createQuery(
+        databaseId: String,
+        collectionId: String,
+        queries: [String]? = nil,
+        transactionId: String? = nil,
+        total: Bool? = nil,
+        ttl: Int? = nil
+    ) async throws -> AppwriteModels.DocumentList<[String: AnyCodable]> {
+        return try await createQuery(
+            databaseId: databaseId,
+            collectionId: collectionId,
+            queries: queries,
+            transactionId: transactionId,
+            total: total,
+            ttl: ttl,
+            nestedType: [String: AnyCodable].self
+        )
+    }
     ///
     /// Get a document by its unique ID. This endpoint response returns a JSON
     /// object with the document data.
@@ -429,19 +572,29 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
 
         let apiParams: [String: Any?] = [
             "queries": queries,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -487,7 +640,6 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Create or update a Document. Before using this route, you should create a
     /// new collection resource using either a [server
@@ -514,21 +666,31 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
 
         let apiParams: [String: Any?] = [
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -579,7 +741,6 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Update a document by its unique ID. Using the patch method you can pass
     /// only specific fields that will get updated.
@@ -604,21 +765,31 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
 
         let apiParams: [String: Any?] = [
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -667,7 +838,6 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Delete a document by its unique ID.
     ///
@@ -686,10 +856,20 @@ open class Databases: Service {
         documentId: String,
         transactionId: String? = nil
     ) async throws -> Any {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
 
         let apiParams: [String: Any?] = [
             "transactionId": transactionId
@@ -697,16 +877,17 @@ open class Databases: Service {
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Decrement a specific attribute of a document by a given value.
     ///
@@ -732,22 +913,35 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+        if attribute.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"attribute\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}/{attribute}/decrement"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
-            .replacingOccurrences(of: "{attribute}", with: attribute)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
+            .replacingOccurrences(of: "{attribute}", with: try Client.encodePath(attribute))
 
         let apiParams: [String: Any?] = [
             "value": value,
             "min": min,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -798,7 +992,6 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Increment a specific attribute of a document by a given value.
     ///
@@ -824,22 +1017,35 @@ open class Databases: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Document<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if collectionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"collectionId\"")
+        }
+        if documentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"documentId\"")
+        }
+        if attribute.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"attribute\"")
+        }
+
         let apiPath: String = "/databases/{databaseId}/collections/{collectionId}/documents/{documentId}/{attribute}/increment"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{collectionId}", with: collectionId)
-            .replacingOccurrences(of: "{documentId}", with: documentId)
-            .replacingOccurrences(of: "{attribute}", with: attribute)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{collectionId}", with: try Client.encodePath(collectionId))
+            .replacingOccurrences(of: "{documentId}", with: try Client.encodePath(documentId))
+            .replacingOccurrences(of: "{attribute}", with: try Client.encodePath(attribute))
 
         let apiParams: [String: Any?] = [
             "value": value,
             "max": max,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Document<T> = { response in
@@ -890,6 +1096,4 @@ open class Databases: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
-
 }

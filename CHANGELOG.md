@@ -1,5 +1,106 @@
 # Change Log
 
+## 21.2.0
+
+* Updated: requests send `X-Appwrite-Response-Format: 2.6.2`; the SDK targets Appwrite 2.6.x
+* Updated: `async-http-client` to `1.36.2` and `swift-nio` to `2.104.0`
+* Added: `selfSigned` option on `WebSocketClient`; `tlsEnabled` defaults to the URL scheme
+* Fixed: an OAuth callback cookie is kept only during a login, and only for its endpoint
+* Fixed: realtime keeps TLS on when self-signed certificates are allowed, instead of connecting unencrypted
+* Fixed: path parameters are percent-encoded as one segment; `.` and `..` throw `AppwriteError`
+* Fixed: chunked upload resume lookups percent-encode the file ID
+* Fixed: examples pass `nil` for unset optional params instead of empty strings
+
+## 21.1.1
+
+* Updated: UIKit example dependency pins to the current resolved graph, replacing versions with known security advisories
+* Fixed: UIKit example resolves the containing SDK as a local Swift package
+
+## 21.1.0
+
+* Added: `account.listMemberships` to list the current user's team memberships
+* Added: `createQuery` on `Databases`, `DocumentsDB` and `TablesDB` to send list queries in the request body
+* Added: `bundleId` and `environment` params on `account.createPushTarget` and `updatePushTarget`
+* Fixed: realtime no longer drops the first frame that arrives with the WebSocket upgrade
+* Fixed: `WebSocketClient.connect()` waits for the upgrade and throws when the server rejects it
+* Fixed: realtime reconnects after the server closes the socket, or the connection drops without a close frame
+* Fixed: `Query.lessThanEqual` takes its attribute unlabelled like other queries; `lessThanEqual(attribute:value:)` is deprecated
+* Updated: SDK diagnostics are written to stderr instead of stdout
+
+## 21.0.0
+
+* Breaking: requests send `X-Appwrite-Response-Format: 2.5.0`; responses follow the 2.5 shapes
+* Breaking: missing response fields decode to their documented defaults instead of throwing
+* Added: `Apps` service to manage apps, installations, keys and secrets
+* Added: `Oauth2` service for the OAuth2 authorize, token, device and grant flows
+* Added: `Push` service, plus `Client.setPushEndpoint` and `setPushClientId`
+* Added: `Topic` helper
+* Added: background push through APNs: `Push` registers the device token and links background subscriptions; call `Push.setDeviceToken` and `Push.handleRemoteNotification` yourself when `AppwritePushAutoRegistration` is `NO`
+* Added: `AppwriteNotificationService`, the base class of a Notification Service Extension that shows pushes while the app is not running
+* Added: `Query` aggregates (`count`, `countDistinct`, `sum`, `avg`, `min`, `max` and more), `groupBy`, `having`, `distinct`, joins, `relationship`, `covers`, `spatialEquals` and `page`
+* Added: `Query.builder()` to chain queries; `build()` returns the query list
+* Added: `ExecutionTrigger.email`
+* Fixed: a file exactly `Client.chunkSize` bytes long uploads in a single request
+* Fixed: requests ask for gzip, so compressed responses decode
+
+## 20.2.0
+
+* Added: `analytics.createEvent` in a new `Analytics` service to send tracking events
+* Added: `avatars.updatePhoto` and `avatars.deletePhoto` to manage the user's custom profile photo, and the `Account` model
+* Added: `Webflow` to the `OAuthProvider` enum
+* Added: optional `state` on `account.createOAuth2Session` and `account.createOAuth2Token`, returned unchanged on the success and failure URLs
+* Added: optional `duration` on `account.createEmailPasswordSession` to set the session length
+* Added: optional `current` on `account.deleteSessions` to keep the current session signed in
+* Added: optional `membershipId` on `teams.createMembership`
+* Added: optional `total` on `account.listSessions`, the `locale` list methods and `listTransactions`
+* Fixed: OAuth2 query parameters (`success`, `failure`, `scopes`, `state`) are URL-encoded, so values containing `&`, `+` or `#` survive the redirect
+
+## 20.1.0
+
+* Added: `account` passkey methods `listPasskeys`, `createPasskey`, `getPasskey`, `updatePasskey`, `deletePasskey` and `updatePasskeyVerification`
+* Added: `account.createPasskeyToken` and `account.updatePasskeyToken` for passkey sign-in
+* Added: `Passkey`, `PasskeyList`, `PasskeyChallenge` and `TokenSecret` models
+
+## 20.0.0
+
+* Breaking: removed `Account.listLogs` and the `Log`, `LogList` models
+* Breaking: removed `Client.setDevKey`
+* Breaking: SDK now targets Appwrite 2.3 (`x-appwrite-response-format: 2.3.0`)
+* Added: `Account.createIdTokenSession` for native Apple and Google sign-in with `IdTokenProvider` enum
+* Added: `Account.createRecoveryOTP` and `Account.updateRecoveryOTP` for code-based password recovery
+* Added: `Account.createEmailVerificationOTP` and `Account.updateEmailVerificationOTP`
+* Added: `kakao` and `tiktok` values to `OAuthProvider`
+* Added: `passwordPwned` field on `User` and `providerIdToken` field on `Identity`
+* Fixed: empty-string required path parameters are rejected instead of sent to the API
+
+## 19.0.0
+
+* Breaking: `Execution.functionId` replaced by `resourceId` and `resourceType` (`ExecutionResourceType`)
+* Breaking: `createOperations` `operations` parameter now typed `[AnyCodable]` instead of `[Any]`
+* Breaking: SDK now targets Appwrite 2.0 (`x-appwrite-response-format: 2.0.0`)
+* Added: `DocumentsDB` and `VectorsDB` services for document and vector database access
+* Added: `Organization` service with `listInstallations`, `createInstallation`, `getInstallation`, `updateInstallation`, `deleteInstallation`
+* Added: `Teams` installation methods `listInstallations`, `createInstallation`, `getInstallation`, `updateInstallation`, `deleteInstallation`
+* Added: `Account` consent methods `listConsents`, `getConsent`, `deleteConsent`, `listConsentTokens`, `getConsentToken`, `deleteConsentToken`
+* Added: `Avatars.getPhoto` returning the best available user profile photo
+* Added: `folder` parameter to `Storage.createFile` and `folder`, `key` fields on `File`
+* Added: `AppInstallation`, `Oauth2Consent`, `Oauth2ConsentToken` models and list variants
+* Added: `ExecutionResourceType` enum, `AuthenticationFactor.custom` and `MfaFactors.custom`
+* Added: `cloudflare`, `huggingface`, `resend` cases to `OAuthProvider`
+* Added: `auto` case to `ImageGravity` enum
+* Updated: binary endpoints send `X-Appwrite-Project` header instead of `project` query parameter
+* Updated: `async-http-client` to 1.36.1 and `swift-nio` to 2.102.0
+* Fixed: README install snippet now uses product name `Appwrite`
+* Fixed: object array parameters such as `createOperations` are sent as JSON arrays, not strings
+
+## 18.3.0
+
+* Added: `Client.setBearer` method for OAuth bearer token authentication
+* Added: `Query.vectorDot`, `Query.vectorCosine`, `Query.vectorEuclidean` vector similarity query methods
+* Added: `appwrite` case to `OAuthProvider` enum
+* Added: optional `Locale` fields: `city`, `timeZone`, `postalCode`, `latitude`, `longitude`, ASN, ISP, connection info
+* Updated: minimum toolchain to Swift 6.1; bumped `async-http-client` and `swift-nio` dependencies
+
 ## 18.2.0
 
 * Added: Realtime connections now send an `x-appwrite-jwt` header for authentication.

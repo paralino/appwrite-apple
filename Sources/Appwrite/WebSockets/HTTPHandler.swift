@@ -1,6 +1,6 @@
+import Foundation
 import NIO
 import NIOHTTP1
-import Foundation
 
 /// Handles the HTTP pipeline for opening a WebSocket connection.
 ///
@@ -8,14 +8,16 @@ import Foundation
 class HTTPHandler {
 
     unowned let client: WebSocketClient
-    
+
     let headers: HTTPHeaders
     
     let userDefaultsGroup: String?
+    let upgraded: EventLoopPromise<Void>
 
-    init(client: WebSocketClient, headers: HTTPHeaders, userDefaultsGroup: String?) {
+    init(client: WebSocketClient, headers: HTTPHeaders, upgraded: EventLoopPromise<Void>, userDefaultsGroup: String?) {
         self.client = client
         self.headers = headers
+        self.upgraded = upgraded
         self.userDefaultsGroup = userDefaultsGroup
     }
 
@@ -42,14 +44,14 @@ class HTTPHandler {
     }
 }
 
-extension HTTPHandler : ChannelInboundHandler, RemovableChannelHandler {
-    
+extension HTTPHandler: ChannelInboundHandler, RemovableChannelHandler {
+
     public typealias InboundIn = HTTPClientResponsePart
     public typealias OutboundOut = HTTPClientRequestPart
-    
+
     func channelActive(context: ChannelHandlerContext) {
         var headers = HTTPHeaders()
-        
+
         headers.add(name: "Host", value: "\(client.host):\(client.port)")
         headers.add(contentsOf: self.headers)
         headers.addDomainCookies(for: client.host, userDefaultsGroup: userDefaultsGroup)
@@ -59,7 +61,7 @@ extension HTTPHandler : ChannelInboundHandler, RemovableChannelHandler {
             uri: "\(client.uri)?\(client.query)",
             headers: headers
         )
-        
+
         context.write(wrapOutboundOut(.head(requestHead)), promise: nil)
         context.writeAndFlush(wrapOutboundOut(.end(nil)), promise: nil)
     }
@@ -69,18 +71,23 @@ extension HTTPHandler : ChannelInboundHandler, RemovableChannelHandler {
 
         switch response {
         case .head(let header):
-            print(String(describing: response))
+            FileHandle.standardError.write(Data("\(String(describing: response))\n".utf8))
             upgradeFailure(status: header.status)
-            break
+            upgraded.fail(WebSocketClientError(rawValue: UInt(header.status.code)) ?? .upgradeRejected)
         case .body(var body):
-            print(body.readString(length: body.readableBytes)!)
-            break
+            FileHandle.standardError.write(Data("\(body.readString(length: body.readableBytes) ?? "")\n".utf8))
         case .end(_):
             break
         }
     }
 
+    func channelInactive(context: ChannelHandlerContext) {
+        upgraded.fail(ChannelError.ioOnClosedChannel)
+        context.fireChannelInactive()
+    }
+
     func errorCaught(context: ChannelHandlerContext, error: Swift.Error) {
+        upgraded.fail(error)
         if client.delegate != nil {
             try! client.delegate?.onError(error: error, status: nil)
         } else {

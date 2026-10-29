@@ -3,7 +3,7 @@ import Foundation
 import NIO
 
 #if canImport(AuthenticationServices)
-import AuthenticationServices
+    import AuthenticationServices
 #endif
 
 ///
@@ -14,8 +14,11 @@ import AuthenticationServices
 public class WebAuthComponent {
 
     private static var callbacks = [String: (Result<String, AppwriteError>) -> Void]()
+    /// The endpoint host of each login in progress, by callback scheme. A callback URL
+    /// can only set a session for a login this app started, and only for its endpoint.
+    private static var hosts = [String: String]()
     #if canImport(AuthenticationServices)
-    private static var currentAuthSession: ASWebAuthenticationSession?
+        private static var currentAuthSession: ASWebAuthenticationSession?
     #endif
 
     ///
@@ -38,9 +41,10 @@ public class WebAuthComponent {
         onComplete: @escaping (Result<String, AppwriteError>) -> Void
     ) {
         callbacks[callbackScheme] = onComplete
+        hosts[callbackScheme] = url.host
 
         #if canImport(AuthenticationServices)
-        currentAuthSession = ASWebAuthenticationSession(
+            currentAuthSession = ASWebAuthenticationSession(
                 url: url,
                 callbackURLScheme: callbackScheme
             ) { callbackURL, error in
@@ -53,41 +57,49 @@ public class WebAuthComponent {
                 }
             }
 
-        if let session = currentAuthSession {
-            /// Indicates that the session should be a private session.
-            session.prefersEphemeralWebBrowserSession = true
-            session.presentationContextProvider = PresentationContextProvider.shared
-            session.start()
-        } else {
-            print("Failed to create ASWebAuthenticationSession")
-        }
+            if let session = currentAuthSession {
+                /// Indicates that the session should be a private session.
+                session.prefersEphemeralWebBrowserSession = true
+                session.presentationContextProvider = PresentationContextProvider.shared
+                session.start()
+            } else {
+                print("Failed to create ASWebAuthenticationSession")
+            }
         #endif
     }
 
     ///
-    /// Handle an incoming cooke from a URL, saving it to use for future requests.
+    /// Handle an incoming cookie from a URL, saving it to use for future requests.
+    ///
+    /// Any app or web page can open a URL with the callback scheme, so the cookie is only
+    /// kept while a login started with that scheme is in progress, and only when it is for
+    /// that login's endpoint.
     ///
     /// - Parameters:
     ///   - url: The URL containing the cookie
     ///
     public static func handleIncomingCookie(from url: URL) {
 
-        guard let components = URLComponents(string: url.absoluteString),
-            let queryItems = components.queryItems else {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            let scheme = components.scheme,
+            let host = hosts[scheme],
+            let queryItems = components.queryItems
+        else {
             return
         }
-        
-        let cookieParts = [String: String](uniqueKeysWithValues: queryItems.compactMap { item in
-            item.value.map { (item.name, $0) }
-        })
 
-        guard var domain = cookieParts["domain"],
-              let key = cookieParts["key"],
-              let secret = cookieParts["secret"] else {
+        var cookieParts = [String: String]()
+        for item in queryItems where cookieParts[item.name] == nil {
+            cookieParts[item.name] = item.value
+        }
+
+        guard let domain = cookieParts["domain"],
+            let key = cookieParts["key"],
+            let secret = cookieParts["secret"],
+            (domain.hasPrefix(".") ? String(domain.dropFirst()) : domain).lowercased() == host.lowercased()
+        else {
             return
         }
-    
-        domain.remove(at: domain.startIndex)
 
         let path: String? = cookieParts["path"]
         let expires: String? = cookieParts["expires"]
@@ -117,12 +129,9 @@ public class WebAuthComponent {
             cookie += "; secure"
         }
 
-        UserDefaults.standard.set([cookie], forKey: domain)
+        UserDefaults.standard.set([cookie], forKey: host)
 
-        WebAuthComponent.onCallback(
-            scheme: components.scheme!,
-            url: components.url!
-        )
+        WebAuthComponent.onCallback(scheme: scheme, url: url)
     }
 
     ///
@@ -149,23 +158,25 @@ public class WebAuthComponent {
             callback(.failure(AppwriteError(message: "User cancelled login.")))
         }
 
+        hosts.removeAll()
+
         #if canImport(AuthenticationServices)
-        currentAuthSession = nil
+            currentAuthSession = nil
         #endif
     }
 }
 
 #if canImport(AuthenticationServices)
-/// Presentation context for the ASWebAuthenticationSession.
-class PresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
-    static let shared = PresentationContextProvider()
+    /// Presentation context for the ASWebAuthenticationSession.
+    class PresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+        static let shared = PresentationContextProvider()
 
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        if let mainWindow = OSApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-            return mainWindow
+        func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+            if let mainWindow = OSApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                return mainWindow
+            }
+
+            return ASPresentationAnchor()
         }
-
-        return ASPresentationAnchor()
     }
-}
 #endif

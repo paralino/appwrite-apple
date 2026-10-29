@@ -1,9 +1,9 @@
-import AsyncHTTPClient
-import Foundation
-import NIO
-import JSONCodable
 import AppwriteEnums
 import AppwriteModels
+import AsyncHTTPClient
+import Foundation
+import JSONCodable
+import NIO
 
 /// The Locale service allows you to customize your app based on your users&#039; location.
 open class Locale: Service {
@@ -13,21 +13,20 @@ open class Locale: Service {
     /// country code, country name, continent name, continent code, ip address and
     /// suggested currency. You can use the locale header to get the data in a
     /// supported language.
-    /// 
+    ///
     /// ([IP Geolocation by DB-IP](https://db-ip.com))
     ///
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Locale
     ///
-    open func get(
-    ) async throws -> AppwriteModels.Locale {
+    open func get() async throws -> AppwriteModels.Locale {
         let apiPath: String = "/locale"
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Locale = { response in
@@ -42,23 +41,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all locale codes in [ISO
     /// 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.LocaleCodeList
     ///
     open func listCodes(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.LocaleCodeList {
         let apiPath: String = "/locale/codes"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.LocaleCodeList = { response in
@@ -73,23 +76,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all continents. You can use the locale header to get the data in a
     /// supported language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.ContinentList
     ///
     open func listContinents(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.ContinentList {
         let apiPath: String = "/locale/continents"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.ContinentList = { response in
@@ -104,23 +111,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all countries. You can use the locale header to get the data in a
     /// supported language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.CountryList
     ///
     open func listCountries(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.CountryList {
         let apiPath: String = "/locale/countries"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.CountryList = { response in
@@ -135,23 +146,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all countries that are currently members of the EU. You can use the
     /// locale header to get the data in a supported language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.CountryList
     ///
     open func listCountriesEU(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.CountryList {
         let apiPath: String = "/locale/countries/eu"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.CountryList = { response in
@@ -166,23 +181,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all countries phone codes. You can use the locale header to get the
     /// data in a supported language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.PhoneList
     ///
     open func listCountriesPhones(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.PhoneList {
         let apiPath: String = "/locale/countries/phones"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.PhoneList = { response in
@@ -197,24 +216,28 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all currencies, including currency symbol, name, plural, and
     /// decimal digits for all major and minor currencies. You can use the locale
     /// header to get the data in a supported language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.CurrencyList
     ///
     open func listCurrencies(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.CurrencyList {
         let apiPath: String = "/locale/currencies"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.CurrencyList = { response in
@@ -229,23 +252,27 @@ open class Locale: Service {
             converter: converter
         )
     }
-
     ///
     /// List of all languages classified by ISO 639-1 including 2-letter code, name
     /// in English, and name in the respective language.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.LanguageList
     ///
     open func listLanguages(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.LanguageList {
         let apiPath: String = "/locale/languages"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.LanguageList = { response in
@@ -260,6 +287,4 @@ open class Locale: Service {
             converter: converter
         )
     }
-
-
 }

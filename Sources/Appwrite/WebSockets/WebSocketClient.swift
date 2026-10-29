@@ -1,12 +1,13 @@
+import Dispatch
 import Foundation
 import NIO
-#if canImport(NIOFoundationCompat)
-import NIOFoundationCompat
-#endif
 import NIOHTTP1
-import NIOWebSocket
-import Dispatch
 import NIOSSL
+import NIOWebSocket
+
+#if canImport(NIOFoundationCompat)
+    import NIOFoundationCompat
+#endif
 
 public let WEBSOCKET_LOCKER_QUEUE = "SyncLocker"
 public let WEBSOCKET_THREAD_QUEUE = "ThreadLocker"
@@ -29,6 +30,7 @@ public class WebSocketClient {
     public private(set) var maxFrameSize: Int
 
     var tlsEnabled: Bool = false
+    var selfSigned: Bool = false
     var closeSent: Bool = false
 
     private let locker = DispatchQueue(label: WEBSOCKET_LOCKER_QUEUE, qos: .background)
@@ -61,9 +63,9 @@ public class WebSocketClient {
     public var isConnected: Bool {
         channel?.isActive ?? false
     }
-    
+
     // MARK: - Stored callbacks
-    
+
     private var _openCallback: (NIOCore.Channel) -> Void = { _ in }
     var onOpen: (NIOCore.Channel) -> Void {
         get {
@@ -77,8 +79,8 @@ public class WebSocketClient {
             }
         }
     }
-    
-    private var _closeCallback: (NIOCore.Channel, Data) -> Void = { _,_ in }
+
+    private var _closeCallback: (NIOCore.Channel, Data) -> Void = { _, _ in }
     var onClose: (NIOCore.Channel, Data) -> Void {
         get {
             return locker.sync {
@@ -105,7 +107,7 @@ public class WebSocketClient {
             }
         }
     }
-    
+
     private var _binaryCallback: (Data) -> Void = { _ in }
     var onBinaryMessage: (Data) -> Void {
         get {
@@ -119,8 +121,8 @@ public class WebSocketClient {
             }
         }
     }
-    
-    private var _errorCallBack: (Swift.Error?, HTTPResponseStatus?) -> Void = { _,_ in }
+
+    private var _errorCallBack: (Swift.Error?, HTTPResponseStatus?) -> Void = { _, _ in }
     var onError: (Swift.Error?, HTTPResponseStatus?) -> Void {
         get {
             return locker.sync {
@@ -133,9 +135,9 @@ public class WebSocketClient {
             }
         }
     }
-    
+
     // MARK: - Callback setters
-    
+
     /// Set a callback to be fired when a WebSocket connection is opened.
     ///
     /// - parameters:
@@ -143,7 +145,7 @@ public class WebSocketClient {
     public func onOpen(_ callback: @escaping (NIOCore.Channel) -> Void) {
         onOpen = callback
     }
-    
+
     /// Set a callback to be fired when a WebSocket text message is received.
     ///
     /// - parameters:
@@ -175,9 +177,9 @@ public class WebSocketClient {
     public func onError(_ callback: @escaping (Swift.Error?, HTTPResponseStatus?) -> Void) {
         onError = callback
     }
-    
+
     // MARK: - Constructors
-    
+
     /// Create a new `WebSocketClient`.
     ///
     /// - parameters:
@@ -220,15 +222,19 @@ public class WebSocketClient {
     ///
     /// - parameters:
     ///     - url:          The absolute URL of the GET method used to identify the WebSocket endpoint
+    ///     - tlsEnabled:   Is TLS enabled for this client. Defaults to the URL scheme: `wss` and `https` use TLS.
+    ///     - selfSigned:   Accept any server certificate. TLS stays on.
     ///     - delegate:     Delegate to handle message and error callbacks.
     public init?(
         _ url: String,
-        tlsEnabled: Bool = true,
+        tlsEnabled: Bool? = nil,
+        selfSigned: Bool = false,
         headers: HTTPHeaders = HTTPHeaders(),
         delegate: WebSocketClientDelegate? = nil,
         userDefaultsGroup: String? = nil
     ) {
         let rawUrl = URL(string: url)
+        let tlsEnabled = tlsEnabled ?? ["wss", "https"].contains(rawUrl?.scheme?.lowercased() ?? "wss")
         self.frameKey = "tergregfgbsfdgfdsfgdbv=="
         self.host = rawUrl?.host ?? "localhost"
         self.port = rawUrl?.port ?? (tlsEnabled ? 443 : 80)
@@ -237,6 +243,7 @@ public class WebSocketClient {
         self.headers = headers
         self.maxFrameSize = 24
         self.tlsEnabled = tlsEnabled
+        self.selfSigned = selfSigned
         self.delegate = delegate
         self.userDefaultsGroup = userDefaultsGroup
 
@@ -247,48 +254,74 @@ public class WebSocketClient {
 
     // MARK: - Open connection
 
-    /// Open a connection to the configured host and attempt to upgrade the connection to a WebSocket. If successful the `onOpen` callback will fire, otherwise a connection error will be thrown from here.
+    /// Open a connection to the configured host and upgrade it to a WebSocket. Returns once the upgrade has completed and the `onOpen` callback has fired; a failed connection or upgrade is thrown from here.
     public func connect() async throws {
         let socketOptions = ChannelOptions.socket(
             SocketOptionLevel(SOL_SOCKET),
             SO_REUSEPORT
         )
 
-        while(threadGroup == nil) {
+        while threadGroup == nil {
             try? await Task.sleep(nanoseconds: 10_000_000)
         }
+
+        let upgraded = threadGroup!.next().makePromise(of: Void.self)
 
         let bootstrap = ClientBootstrap(group: threadGroup!)
             .channelOption(socketOptions, value: 1)
             .channelInitializer {
-                self.openChannel(channel: $0)
+                self.openChannel(channel: $0, upgraded: upgraded)
             }
 
-        _ = try await bootstrap
-            .connect(host: self.host,port: self.port)
-            .get()
+        let channel: NIOCore.Channel
+        do {
+            channel =
+                try await bootstrap
+                .connect(host: self.host, port: self.port)
+                .get()
+        } catch {
+            upgraded.fail(error)
+            throw error
+        }
+
+        do {
+            try await upgraded.futureResult.get()
+        } catch {
+            channel.close(promise: nil)
+            throw error
+        }
     }
 
-    private func openChannel(channel: NIOCore.Channel) -> EventLoopFuture<Void> {
-        let httpHandler = HTTPHandler(client: self, headers: headers, userDefaultsGroup: userDefaultsGroup)
-        
+    private func openChannel(
+        channel: NIOCore.Channel,
+        upgraded: EventLoopPromise<Void>
+    ) -> EventLoopFuture<Void> {
+        let httpHandler = HTTPHandler(client: self, headers: headers, upgraded: upgraded, userDefaultsGroup: userDefaultsGroup)
+
         let basicUpgrader = NIOWebSocketClientUpgrader(
             requestKey: self.frameKey,
             upgradePipelineHandler: { channel, response in
-                self.upgradePipelineHandler(channel: channel, response: response)
+                self.upgradePipelineHandler(channel: channel, response: response, upgraded: upgraded)
             }
         )
 
-        let config: NIOHTTPClientUpgradeConfiguration = (upgraders: [basicUpgrader], completionHandler: { context in
-            context.channel.pipeline.removeHandler(httpHandler, promise: nil)
-        })
+        let config: NIOHTTPClientUpgradeConfiguration = (
+            upgraders: [basicUpgrader],
+            completionHandler: { context in
+                context.channel.pipeline.removeHandler(httpHandler, promise: nil)
+            }
+        )
 
-        return channel.pipeline.addHTTPClientHandlers(withClientUpgrade: config).flatMap { _ in
+        return channel.pipeline.addHTTPClientHandlers(leftOverBytesStrategy: .forwardBytes, withClientUpgrade: config).flatMap { _ in
             return channel.pipeline.addHandler(httpHandler).flatMap { _ in
                 if self.tlsEnabled {
-                    let tlsConfig = TLSConfiguration.makeClientConfiguration()
+                    var tlsConfig = TLSConfiguration.makeClientConfiguration()
+                    if self.selfSigned {
+                        tlsConfig.certificateVerification = .none
+                    }
                     let sslContext = try! NIOSSLContext(configuration: tlsConfig)
-                    let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: self.host)
+                    let sslHandler = try! NIOSSLClientHandler(
+                        context: sslContext, serverHostname: self.host)
                     return channel.pipeline.addHandler(sslHandler, position: .first)
                 } else {
                     return channel.eventLoop.makeSucceededFuture(())
@@ -297,20 +330,26 @@ public class WebSocketClient {
         }
     }
 
-    private func upgradePipelineHandler(channel: NIOCore.Channel, response: HTTPResponseHead) -> EventLoopFuture<Void> {
+    private func upgradePipelineHandler(
+        channel: NIOCore.Channel,
+        response: HTTPResponseHead,
+        upgraded: EventLoopPromise<Void>
+    ) -> EventLoopFuture<Void> {
         let handler = MessageHandler(client: self)
 
         if response.status == .switchingProtocols {
             self.channel = channel
         }
 
-        return channel.pipeline.addHandler(handler).map {
+        let opened = channel.pipeline.addHandler(handler).map {
             if let delegate = self.delegate {
                 delegate.onOpen(channel: channel)
             } else {
                 self.onOpen(channel)
             }
         }
+        opened.cascade(to: upgraded)
+        return opened
     }
 
     // MARK: - Close connection
@@ -422,7 +461,7 @@ public class WebSocketClient {
                 promise: promise
             )
         } catch let error {
-            print(error)
+            FileHandle.standardError.write(Data("\(error)\n".utf8))
         }
     }
 

@@ -2,7 +2,7 @@ import Foundation
 import JSONCodable
 
 /// Teams List
-open class TeamList<T : Codable>: Codable {
+open class TeamList<T: Codable>: Codable {
 
     enum CodingKeys: String, CodingKey {
         case total = "total"
@@ -25,8 +25,8 @@ open class TeamList<T : Codable>: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.total = try container.decode(Int.self, forKey: .total)
-        self.teams = try container.decode([Team<T>].self, forKey: .teams)
+        self.total = try container.contains(.total) ? container.decode(Int.self, forKey: .total) : 0
+        self.teams = try container.contains(.teams) ? container.decode([Team<T>].self, forKey: .teams) : []
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -39,11 +39,17 @@ open class TeamList<T : Codable>: Codable {
     public func toMap() -> [String: Any] {
         return [
             "total": total as Any,
-            "teams": teams.map { $0.toMap() } as Any
+            "teams": teams.map { $0.toMap() } as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> TeamList {
+    public static func from(map: [String: Any]) -> TeamList {
+        let defaults: [String: Any] = [
+            "total": 0,
+            "teams": [Any](),
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return TeamList(
             total: map["total"] as! Int,
             teams: (map["teams"] as! [[String: Any]]).map { Team.from(map: $0) }

@@ -25,8 +25,8 @@ open class ExecutionList: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.total = try container.decode(Int.self, forKey: .total)
-        self.executions = try container.decode([Execution].self, forKey: .executions)
+        self.total = try container.contains(.total) ? container.decode(Int.self, forKey: .total) : 0
+        self.executions = try container.contains(.executions) ? container.decode([Execution].self, forKey: .executions) : []
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -39,11 +39,17 @@ open class ExecutionList: Codable {
     public func toMap() -> [String: Any] {
         return [
             "total": total as Any,
-            "executions": executions.map { $0.toMap() } as Any
+            "executions": executions.map { $0.toMap() } as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> ExecutionList {
+    public static func from(map: [String: Any]) -> ExecutionList {
+        let defaults: [String: Any] = [
+            "total": 0,
+            "executions": [Any](),
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return ExecutionList(
             total: map["total"] as! Int,
             executions: (map["executions"] as! [[String: Any]]).map { Execution.from(map: $0) }

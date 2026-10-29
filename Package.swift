@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.1
 
 import PackageDescription
 
@@ -17,13 +17,16 @@ let package = Package(
                 "Appwrite",
                 "AppwriteEnums",
                 "AppwriteModels",
-                "JSONCodable"
+                "JSONCodable",
             ]
-        ),
+        )
     ],
     dependencies: [
         .package(path: "../async-http-client"),
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.94.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.104.0"),
+        // swift-distributed-tracing 1.6.0 makes ServiceContext ambiguous inside async-http-client.
+        .package(url: "https://github.com/apple/swift-distributed-tracing.git", "1.0.0"..<"1.6.0"),
+        .package(url: "https://github.com/swift-server-community/mqtt-nio.git", from: "2.13.0"),
     ],
     targets: [
         .target(
@@ -31,16 +34,18 @@ let package = Package(
             dependencies: [
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "NIOWebSocket", package: "swift-nio"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "MQTTNIO", package: "mqtt-nio"),
                 "AppwriteModels",
                 "AppwriteEnums",
-                "JSONCodable"
+                "JSONCodable",
             ]
         ),
         .target(
             name: "AppwriteModels",
             dependencies: [
                 "AppwriteEnums",
-                "JSONCodable"
+                "JSONCodable",
             ]
         ),
         .target(
@@ -52,9 +57,12 @@ let package = Package(
         .testTarget(
             name: "AppwriteTests",
             dependencies: [
-                "Appwrite"
+                "Appwrite",
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOEmbedded", package: "swift-nio"),
+                .product(name: "NIOWebSocket", package: "swift-nio"),
             ]
-        )
+        ),
     ],
     swiftLanguageVersions: [.v5]
 )

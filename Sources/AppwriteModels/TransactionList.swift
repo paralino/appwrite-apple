@@ -25,8 +25,8 @@ open class TransactionList: Codable {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.total = try container.decode(Int.self, forKey: .total)
-        self.transactions = try container.decode([Transaction].self, forKey: .transactions)
+        self.total = try container.contains(.total) ? container.decode(Int.self, forKey: .total) : 0
+        self.transactions = try container.contains(.transactions) ? container.decode([Transaction].self, forKey: .transactions) : []
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -39,11 +39,17 @@ open class TransactionList: Codable {
     public func toMap() -> [String: Any] {
         return [
             "total": total as Any,
-            "transactions": transactions.map { $0.toMap() } as Any
+            "transactions": transactions.map { $0.toMap() } as Any,
         ]
     }
 
-    public static func from(map: [String: Any] ) -> TransactionList {
+    public static func from(map: [String: Any]) -> TransactionList {
+        let defaults: [String: Any] = [
+            "total": 0,
+            "transactions": [Any](),
+        ]
+        let map = defaults.merging(map) { _, new in new }
+
         return TransactionList(
             total: map["total"] as! Int,
             transactions: (map["transactions"] as! [[String: Any]]).map { Transaction.from(map: $0) }

@@ -1,9 +1,9 @@
-import AsyncHTTPClient
-import Foundation
-import NIO
-import JSONCodable
 import AppwriteEnums
 import AppwriteModels
+import AsyncHTTPClient
+import Foundation
+import JSONCodable
+import NIO
 
 /// The Account service allows you to authenticate and manage a user account.
 open class Account: Service {
@@ -23,7 +23,7 @@ open class Account: Service {
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -45,13 +45,11 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.User<T>
     ///
-    open func get(
-    ) async throws -> AppwriteModels.User<[String: AnyCodable]> {
+    open func get() async throws -> AppwriteModels.User<[String: AnyCodable]> {
         return try await get(
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Use this endpoint to allow a new user to register a new account in your
     /// project. After the user registration completes successfully, you can use
@@ -82,13 +80,13 @@ open class Account: Service {
             "userId": userId,
             "email": email,
             "password": password,
-            "name": name
+            "name": name,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -135,7 +133,248 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
+    ///
+    /// Get a list of the OAuth2 consents the current user has given to third-party
+    /// apps.
+    ///
+    /// - Parameters:
+    ///   - queries: [String] (optional)
+    ///   - total: Bool (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Oauth2ConsentList
+    ///
+    open func listConsents(
+        queries: [String]? = nil,
+        total: Bool? = nil
+    ) async throws -> AppwriteModels.Oauth2ConsentList {
+        let apiPath: String = "/account/consents"
 
+        let apiParams: [String: Any?] = [
+            "queries": queries,
+            "total": total,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Oauth2ConsentList = { response in
+            return AppwriteModels.Oauth2ConsentList.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Get an OAuth2 consent the current user has given to a third-party app by
+    /// its unique ID.
+    ///
+    /// - Parameters:
+    ///   - consentId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Oauth2Consent
+    ///
+    open func getConsent(
+        consentId: String
+    ) async throws -> AppwriteModels.Oauth2Consent {
+        if consentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"consentId\"")
+        }
+
+        let apiPath: String = "/account/consents/{consentId}"
+            .replacingOccurrences(of: "{consentId}", with: try Client.encodePath(consentId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Oauth2Consent = { response in
+            return AppwriteModels.Oauth2Consent.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Delete an OAuth2 consent by its unique ID. All token families issued under
+    /// the consent are revoked, and the app must ask for consent again to regain
+    /// access.
+    ///
+    /// - Parameters:
+    ///   - consentId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: Any
+    ///
+    open func deleteConsent(
+        consentId: String
+    ) async throws -> Any {
+        if consentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"consentId\"")
+        }
+
+        let apiPath: String = "/account/consents/{consentId}"
+            .replacingOccurrences(of: "{consentId}", with: try Client.encodePath(consentId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        return try await client.call(
+            method: "DELETE",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams
+        )
+    }
+    ///
+    /// Get a list of the token families issued under an OAuth2 consent. Each entry
+    /// represents one authorized device or session; the token secrets themselves
+    /// are never returned.
+    ///
+    /// - Parameters:
+    ///   - consentId: String
+    ///   - queries: [String] (optional)
+    ///   - total: Bool (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Oauth2ConsentTokenList
+    ///
+    open func listConsentTokens(
+        consentId: String,
+        queries: [String]? = nil,
+        total: Bool? = nil
+    ) async throws -> AppwriteModels.Oauth2ConsentTokenList {
+        if consentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"consentId\"")
+        }
+
+        let apiPath: String = "/account/consents/{consentId}/tokens"
+            .replacingOccurrences(of: "{consentId}", with: try Client.encodePath(consentId))
+
+        let apiParams: [String: Any?] = [
+            "queries": queries,
+            "total": total,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Oauth2ConsentTokenList = { response in
+            return AppwriteModels.Oauth2ConsentTokenList.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Get a token family issued under an OAuth2 consent by its unique ID. The
+    /// token secrets themselves are never returned.
+    ///
+    /// - Parameters:
+    ///   - consentId: String
+    ///   - tokenId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Oauth2ConsentToken
+    ///
+    open func getConsentToken(
+        consentId: String,
+        tokenId: String
+    ) async throws -> AppwriteModels.Oauth2ConsentToken {
+        if consentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"consentId\"")
+        }
+        if tokenId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tokenId\"")
+        }
+
+        let apiPath: String = "/account/consents/{consentId}/tokens/{tokenId}"
+            .replacingOccurrences(of: "{consentId}", with: try Client.encodePath(consentId))
+            .replacingOccurrences(of: "{tokenId}", with: try Client.encodePath(tokenId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Oauth2ConsentToken = { response in
+            return AppwriteModels.Oauth2ConsentToken.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Delete a token family issued under an OAuth2 consent by its unique ID. The
+    /// access and refresh tokens of the family stop working immediately; other
+    /// token families and the consent itself are unaffected.
+    ///
+    /// - Parameters:
+    ///   - consentId: String
+    ///   - tokenId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: Any
+    ///
+    open func deleteConsentToken(
+        consentId: String,
+        tokenId: String
+    ) async throws -> Any {
+        if consentId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"consentId\"")
+        }
+        if tokenId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tokenId\"")
+        }
+
+        let apiPath: String = "/account/consents/{consentId}/tokens/{tokenId}"
+            .replacingOccurrences(of: "{consentId}", with: try Client.encodePath(consentId))
+            .replacingOccurrences(of: "{tokenId}", with: try Client.encodePath(tokenId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        return try await client.call(
+            method: "DELETE",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams
+        )
+    }
     ///
     /// Update currently logged in user account email address. After changing user
     /// address, the user confirmation status will get reset. A new confirmation
@@ -144,7 +383,6 @@ open class Account: Service {
     /// user password is required to complete this request.
     /// This endpoint can also be used to convert an anonymous account to a normal
     /// one, by passing an email address and a new password.
-    /// 
     ///
     /// - Parameters:
     ///   - email: String
@@ -161,13 +399,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "email": email,
-            "password": password
+            "password": password,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -191,7 +429,6 @@ open class Account: Service {
     /// user password is required to complete this request.
     /// This endpoint can also be used to convert an anonymous account to a normal
     /// one, by passing an email address and a new password.
-    /// 
     ///
     /// - Parameters:
     ///   - email: String
@@ -209,7 +446,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Get the list of identities for the currently logged in user.
     ///
@@ -227,12 +463,12 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "queries": queries,
-            "total": total
+            "total": total,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.IdentityList = { response in
@@ -247,7 +483,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Delete an identity by its unique ID.
     ///
@@ -259,23 +494,28 @@ open class Account: Service {
     open func deleteIdentity(
         identityId: String
     ) async throws -> Any {
+        if identityId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"identityId\"")
+        }
+
         let apiPath: String = "/account/identities/{identityId}"
-            .replacingOccurrences(of: "{identityId}", with: identityId)
+            .replacingOccurrences(of: "{identityId}", with: try Client.encodePath(identityId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Use this endpoint to create a JSON Web Token. You can use the resulting JWT
     /// to authenticate on behalf of the current user when working with the
@@ -300,7 +540,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Jwt = { response in
@@ -315,35 +555,33 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
-    /// Get the list of latest security activity logs for the currently logged in
-    /// user. Each log returns user IP address, location and date and time of log.
+    /// Get the team memberships of the currently logged in user.
     ///
     /// - Parameters:
     ///   - queries: [String] (optional)
     ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
-    /// - Returns: AppwriteModels.LogList
+    /// - Returns: AppwriteModels.MembershipList
     ///
-    open func listLogs(
+    open func listMemberships(
         queries: [String]? = nil,
         total: Bool? = nil
-    ) async throws -> AppwriteModels.LogList {
-        let apiPath: String = "/account/logs"
+    ) async throws -> AppwriteModels.MembershipList {
+        let apiPath: String = "/account/memberships"
 
         let apiParams: [String: Any?] = [
             "queries": queries,
-            "total": total
+            "total": total,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
-        let converter: (Any) throws -> AppwriteModels.LogList = { response in
-            return AppwriteModels.LogList.from(map: response as! [String: Any])
+        let converter: (Any) throws -> AppwriteModels.MembershipList = { response in
+            return AppwriteModels.MembershipList.from(map: response as! [String: Any])
         }
 
         return try await client.call(
@@ -354,7 +592,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Enable or disable MFA on an account.
     ///
@@ -376,7 +613,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -408,7 +645,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Add an authenticator app to be used as an MFA factor. Verify the
     /// authenticator using the [verify
@@ -425,14 +661,14 @@ open class Account: Service {
         type: AppwriteEnums.AuthenticatorType
     ) async throws -> AppwriteModels.MfaType {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaType = { response in
@@ -447,7 +683,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Add an authenticator app to be used as an MFA factor. Verify the
     /// authenticator using the [verify
@@ -463,14 +698,14 @@ open class Account: Service {
         type: AppwriteEnums.AuthenticatorType
     ) async throws -> AppwriteModels.MfaType {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaType = { response in
@@ -485,7 +720,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Verify an authenticator app after adding it using the [add
     /// authenticator](/docs/references/cloud/client-web/account#createMfaAuthenticator)
@@ -504,7 +738,7 @@ open class Account: Service {
         nestedType: T.Type
     ) async throws -> AppwriteModels.User<T> {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any?] = [
             "otp": otp
@@ -513,7 +747,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -551,7 +785,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Verify an authenticator app after adding it using the [add
     /// authenticator](/docs/references/cloud/client-web/account#createMfaAuthenticator)
@@ -569,7 +802,7 @@ open class Account: Service {
         nestedType: T.Type
     ) async throws -> AppwriteModels.User<T> {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any?] = [
             "otp": otp
@@ -578,7 +811,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -615,7 +848,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Delete an authenticator for a user by ID.
     ///
@@ -629,22 +861,23 @@ open class Account: Service {
         type: AppwriteEnums.AuthenticatorType
     ) async throws -> Any {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Delete an authenticator for a user by ID.
     ///
@@ -657,22 +890,23 @@ open class Account: Service {
         type: AppwriteEnums.AuthenticatorType
     ) async throws -> Any {
         let apiPath: String = "/account/mfa/authenticators/{type}"
-            .replacingOccurrences(of: "{type}", with: type.rawValue)
+            .replacingOccurrences(of: "{type}", with: try Client.encodePath(type.rawValue))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Begin the process of MFA verification after sign-in. Finish the flow with
     /// [updateMfaChallenge](/docs/references/cloud/client-web/account#updateMfaChallenge)
@@ -696,7 +930,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaChallenge = { response in
@@ -711,7 +945,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Begin the process of MFA verification after sign-in. Finish the flow with
     /// [updateMfaChallenge](/docs/references/cloud/client-web/account#updateMfaChallenge)
@@ -734,7 +967,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaChallenge = { response in
@@ -749,7 +982,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Complete the MFA challenge by providing the one-time password. Finish the
     /// process of MFA verification by providing the one-time password. To begin
@@ -772,13 +1004,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "challengeId": challengeId,
-            "otp": otp
+            "otp": otp,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -793,7 +1025,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Complete the MFA challenge by providing the one-time password. Finish the
     /// process of MFA verification by providing the one-time password. To begin
@@ -815,13 +1046,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "challengeId": challengeId,
-            "otp": otp
+            "otp": otp,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -836,7 +1067,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// List the factors available on the account to be used as a MFA challange.
     ///
@@ -844,15 +1074,14 @@ open class Account: Service {
     /// - Returns: AppwriteModels.MfaFactors
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `Account.listMFAFactors` instead.")
-    open func listMfaFactors(
-    ) async throws -> AppwriteModels.MfaFactors {
+    open func listMfaFactors() async throws -> AppwriteModels.MfaFactors {
         let apiPath: String = "/account/mfa/factors"
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaFactors = { response in
@@ -867,22 +1096,20 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// List the factors available on the account to be used as a MFA challange.
     ///
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.MfaFactors
     ///
-    open func listMFAFactors(
-    ) async throws -> AppwriteModels.MfaFactors {
+    open func listMFAFactors() async throws -> AppwriteModels.MfaFactors {
         let apiPath: String = "/account/mfa/factors"
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaFactors = { response in
@@ -897,7 +1124,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Get recovery codes that can be used as backup for MFA flow. Before getting
     /// codes, they must be generated using
@@ -908,15 +1134,14 @@ open class Account: Service {
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `Account.getMFARecoveryCodes` instead.")
-    open func getMfaRecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func getMfaRecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -931,7 +1156,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Get recovery codes that can be used as backup for MFA flow. Before getting
     /// codes, they must be generated using
@@ -941,15 +1165,14 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
-    open func getMFARecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func getMFARecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -964,7 +1187,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Generate recovery codes as backup for MFA flow. It's recommended to
     /// generate and show then immediately after user successfully adds their
@@ -976,8 +1198,7 @@ open class Account: Service {
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `Account.createMFARecoveryCodes` instead.")
-    open func createMfaRecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func createMfaRecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
@@ -985,7 +1206,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -1000,7 +1221,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Generate recovery codes as backup for MFA flow. It's recommended to
     /// generate and show then immediately after user successfully adds their
@@ -1011,8 +1231,7 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
-    open func createMFARecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func createMFARecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
@@ -1020,7 +1239,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -1035,7 +1254,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Regenerate recovery codes that can be used as backup for MFA flow. Before
     /// regenerating codes, they must be first generated using
@@ -1046,8 +1264,7 @@ open class Account: Service {
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
     @available(*, deprecated, message: "This API has been deprecated since 1.8.0. Please use `Account.updateMFARecoveryCodes` instead.")
-    open func updateMfaRecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func updateMfaRecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
@@ -1055,7 +1272,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -1070,7 +1287,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Regenerate recovery codes that can be used as backup for MFA flow. Before
     /// regenerating codes, they must be first generated using
@@ -1080,8 +1296,7 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.MfaRecoveryCodes
     ///
-    open func updateMFARecoveryCodes(
-    ) async throws -> AppwriteModels.MfaRecoveryCodes {
+    open func updateMFARecoveryCodes() async throws -> AppwriteModels.MfaRecoveryCodes {
         let apiPath: String = "/account/mfa/recovery-codes"
 
         let apiParams: [String: Any] = [:]
@@ -1089,7 +1304,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.MfaRecoveryCodes = { response in
@@ -1104,7 +1319,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Update currently logged in user account name.
     ///
@@ -1126,7 +1340,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -1158,7 +1372,250 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
+    ///
+    /// Get the list of verified passkeys registered by the currently logged in
+    /// user.
+    ///
+    /// - Parameters:
+    ///   - queries: [String] (optional)
+    ///   - total: Bool (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.PasskeyList
+    ///
+    open func listPasskeys(
+        queries: [String]? = nil,
+        total: Bool? = nil
+    ) async throws -> AppwriteModels.PasskeyList {
+        let apiPath: String = "/account/passkeys"
 
+        let apiParams: [String: Any?] = [
+            "queries": queries,
+            "total": total,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.PasskeyList = { response in
+            return AppwriteModels.PasskeyList.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Start registering a passkey for the currently logged in user. The session
+    /// must have signed in or completed an MFA challenge within the last 10
+    /// minutes. Pass the returned `publicKey` options to
+    /// `navigator.credentials.create()`, then complete the registration with
+    /// [Update passkey
+    /// verification](/docs/references/cloud/client-web/account#updatePasskeyVerification).
+    /// The passkey stays pending until verified, and the challenge expires after 5
+    /// minutes.
+    ///
+    /// - Parameters:
+    ///   - passkeyId: String (optional)
+    ///   - name: String (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.PasskeyChallenge
+    ///
+    open func createPasskey(
+        passkeyId: String? = nil,
+        name: String? = nil
+    ) async throws -> AppwriteModels.PasskeyChallenge {
+        let apiPath: String = "/account/passkeys"
+
+        let apiParams: [String: Any?] = [
+            "passkeyId": passkeyId,
+            "name": name,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.PasskeyChallenge = { response in
+            return AppwriteModels.PasskeyChallenge.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Get a verified passkey of the currently logged in user by its unique ID.
+    ///
+    /// - Parameters:
+    ///   - passkeyId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Passkey
+    ///
+    open func getPasskey(
+        passkeyId: String
+    ) async throws -> AppwriteModels.Passkey {
+        if passkeyId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"passkeyId\"")
+        }
+
+        let apiPath: String = "/account/passkeys/{passkeyId}"
+            .replacingOccurrences(of: "{passkeyId}", with: try Client.encodePath(passkeyId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Passkey = { response in
+            return AppwriteModels.Passkey.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "GET",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Rename a passkey of the currently logged in user.
+    ///
+    /// - Parameters:
+    ///   - passkeyId: String
+    ///   - name: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Passkey
+    ///
+    open func updatePasskey(
+        passkeyId: String,
+        name: String
+    ) async throws -> AppwriteModels.Passkey {
+        if passkeyId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"passkeyId\"")
+        }
+
+        let apiPath: String = "/account/passkeys/{passkeyId}"
+            .replacingOccurrences(of: "{passkeyId}", with: try Client.encodePath(passkeyId))
+
+        let apiParams: [String: Any?] = [
+            "name": name
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Passkey = { response in
+            return AppwriteModels.Passkey.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "PATCH",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Delete a passkey from the currently logged in user. The passkey can no
+    /// longer be used to sign in, although it may remain stored on the user's
+    /// device. The session must have signed in or completed an MFA challenge
+    /// within the last 10 minutes.
+    ///
+    /// - Parameters:
+    ///   - passkeyId: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: Any
+    ///
+    open func deletePasskey(
+        passkeyId: String
+    ) async throws -> Any {
+        if passkeyId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"passkeyId\"")
+        }
+
+        let apiPath: String = "/account/passkeys/{passkeyId}"
+            .replacingOccurrences(of: "{passkeyId}", with: try Client.encodePath(passkeyId))
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        return try await client.call(
+            method: "DELETE",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams
+        )
+    }
+    ///
+    /// Complete a passkey registration started with [Create
+    /// passkey](/docs/references/cloud/client-web/account#createPasskey). Pass the
+    /// JSON form of the credential returned by `navigator.credentials.create()`,
+    /// for example `credential.toJSON()`. Each registration can be verified once;
+    /// a failed attempt requires starting it again.
+    ///
+    /// - Parameters:
+    ///   - passkeyId: String
+    ///   - credential: Any
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Passkey
+    ///
+    open func updatePasskeyVerification(
+        passkeyId: String,
+        credential: Any
+    ) async throws -> AppwriteModels.Passkey {
+        if passkeyId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"passkeyId\"")
+        }
+
+        let apiPath: String = "/account/passkeys/{passkeyId}/verification"
+            .replacingOccurrences(of: "{passkeyId}", with: try Client.encodePath(passkeyId))
+
+        let apiParams: [String: Any?] = [
+            "credential": credential
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Passkey = { response in
+            return AppwriteModels.Passkey.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "PUT",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
     ///
     /// Update currently logged in user password. For validation, user is required
     /// to pass in the new password, and the old password. For users created with
@@ -1179,13 +1636,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "password": password,
-            "oldPassword": oldPassword
+            "oldPassword": oldPassword,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -1222,7 +1679,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Update the currently logged in user's phone number. After updating the
     /// phone number, the phone verification status will be reset. A confirmation
@@ -1245,13 +1701,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "phone": phone,
-            "password": password
+            "password": password,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -1290,7 +1746,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Get the preferences as a key-value object for the currently logged in user.
     ///
@@ -1306,7 +1761,7 @@ open class Account: Service {
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Preferences<T> = { response in
@@ -1328,13 +1783,11 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Preferences<T>
     ///
-    open func getPrefs(
-    ) async throws -> AppwriteModels.Preferences<[String: AnyCodable]> {
+    open func getPrefs() async throws -> AppwriteModels.Preferences<[String: AnyCodable]> {
         return try await getPrefs(
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Update currently logged in user account preferences. The object you pass is
     /// stored as is, and replaces any previous value. The maximum allowed prefs
@@ -1358,7 +1811,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -1392,7 +1845,6 @@ open class Account: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Sends the user an email with a temporary secret key for password reset.
     /// When the user clicks the confirmation link he is redirected back to your
@@ -1417,13 +1869,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "email": email,
-            "url": url
+            "url": url,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -1438,18 +1890,25 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to complete the user account password reset. Both the
     /// **userId** and **secret** arguments will be passed as query parameters to
     /// the redirect URL you have provided when sending your request to the [POST
     /// /account/recovery](https://appwrite.io/docs/references/cloud/client-web/account#createRecovery)
     /// endpoint.
-    /// 
+    ///
     /// Please note that in order to avoid a [Redirect
     /// Attack](https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.md)
     /// the only valid redirect URLs are the ones from domains you have set when
     /// adding your platforms in the console interface.
+    ///
+    /// The new password must satisfy the project's enabled password policies,
+    /// including custom deny lists. Dictionary entries match the entire password
+    /// case-sensitively; personal-data terms match substrings case-insensitively.
+    /// Personal-data validation runs after token verification against the
+    /// recovered user's ID, name, email, and phone, closing the previous recovery
+    /// gap for profile-based checks. A rejected password leaves the existing
+    /// credentials unchanged and the recovery token usable.
     ///
     /// - Parameters:
     ///   - userId: String
@@ -1468,13 +1927,13 @@ open class Account: Service {
         let apiParams: [String: Any?] = [
             "userId": userId,
             "secret": secret,
-            "password": password
+            "password": password,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -1489,23 +1948,131 @@ open class Account: Service {
             converter: converter
         )
     }
+    ///
+    /// Use this endpoint to send a 6-digit password recovery code to the user's
+    /// email address. Unlike
+    /// [createRecovery](https://appwrite.io/docs/references/cloud/client-web/account#createRecovery),
+    /// this method requires no redirect URL, which makes it suitable for mobile
+    /// and desktop apps that cannot host a recovery page. Learn more about how to
+    /// [complete the recovery
+    /// process](https://appwrite.io/docs/references/cloud/client-web/account#updateRecoveryOTP).
+    /// The code sent to the user's email address is valid for 15 minutes.
+    ///
+    /// Enable the **phrase** parameter to include a randomly generated security
+    /// phrase in both the email and the response. Showing that phrase in your app
+    /// lets the user confirm the email genuinely came from your request, which
+    /// helps protect against phishing.
+    ///
+    /// - Parameters:
+    ///   - email: String
+    ///   - phrase: Bool (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Token
+    ///
+    open func createRecoveryOTP(
+        email: String,
+        phrase: Bool? = nil
+    ) async throws -> AppwriteModels.Token {
+        let apiPath: String = "/account/recovery/otp"
 
+        let apiParams: [String: Any?] = [
+            "email": email,
+            "phrase": phrase,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Token = { response in
+            return AppwriteModels.Token.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Use this endpoint to complete the user password recovery process using the
+    /// 6-digit code that was emailed by
+    /// [createRecoveryOTP](https://appwrite.io/docs/references/cloud/client-web/account#createRecoveryOTP).
+    /// Pass the **userId** of the user along with the **secret** code from the
+    /// email and the new **password** to set. If confirmed, this route will return
+    /// a 200 status code, the code is consumed and the user's password is updated.
+    ///
+    /// The new password must satisfy the project's enabled password policies,
+    /// including custom deny lists. Dictionary entries match the entire password
+    /// case-sensitively; personal-data terms match substrings case-insensitively.
+    /// Personal-data validation runs after token verification against the
+    /// recovered user's ID, name, email, and phone, closing the previous recovery
+    /// gap for profile-based checks. A rejected password leaves the existing
+    /// credentials unchanged and the recovery token usable.
+    ///
+    /// - Parameters:
+    ///   - userId: String
+    ///   - secret: String
+    ///   - password: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Token
+    ///
+    open func updateRecoveryOTP(
+        userId: String,
+        secret: String,
+        password: String
+    ) async throws -> AppwriteModels.Token {
+        let apiPath: String = "/account/recovery/otp"
+
+        let apiParams: [String: Any?] = [
+            "userId": userId,
+            "secret": secret,
+            "password": password,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Token = { response in
+            return AppwriteModels.Token.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "PUT",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
     ///
     /// Get the list of active sessions across different devices for the currently
     /// logged in user.
     ///
+    /// - Parameters:
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.SessionList
     ///
     open func listSessions(
+        total: Bool? = nil
     ) async throws -> AppwriteModels.SessionList {
         let apiPath: String = "/account/sessions"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "total": total
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.SessionList = { response in
@@ -1520,32 +2087,38 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Delete all sessions from the user account and remove any sessions cookies
-    /// from the end client.
+    /// from the end client. Pass `current` as false to keep the session making the
+    /// request and sign out of every other session.
     ///
+    /// - Parameters:
+    ///   - current: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: Any
     ///
     open func deleteSessions(
+        current: Bool? = nil
     ) async throws -> Any {
         let apiPath: String = "/account/sessions"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "current": current
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Use this endpoint to allow a new user to register an anonymous account in
     /// your project. This route will also create a new session for the user. To
@@ -1558,8 +2131,7 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Session
     ///
-    open func createAnonymousSession(
-    ) async throws -> AppwriteModels.Session {
+    open func createAnonymousSession() async throws -> AppwriteModels.Session {
         let apiPath: String = "/account/sessions/anonymous"
 
         let apiParams: [String: Any] = [:]
@@ -1567,7 +2139,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1582,11 +2154,13 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Allow the user to login into their account by providing a valid email and
     /// password combination. This route will create a new session for the user.
-    /// 
+    /// Use the optional `duration` parameter to create a shorter session, for
+    /// example when the user doesn't choose "remember me". It must be at least 60
+    /// seconds and cannot exceed the project maximum session length.
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
@@ -1594,24 +2168,27 @@ open class Account: Service {
     /// - Parameters:
     ///   - email: String
     ///   - password: String
+    ///   - duration: Int (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Session
     ///
     open func createEmailPasswordSession(
         email: String,
-        password: String
+        password: String,
+        duration: Int? = nil
     ) async throws -> AppwriteModels.Session {
         let apiPath: String = "/account/sessions/email"
 
         let apiParams: [String: Any?] = [
             "email": email,
-            "password": password
+            "password": password,
+            "duration": duration,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1626,7 +2203,96 @@ open class Account: Service {
             converter: converter
         )
     }
+    ///
+    /// Allow the user to login to their account using an OpenID Connect ID token
+    /// obtained natively from the OAuth2 provider, for example via Google
+    /// Credential Manager on Android or Sign in with Apple on iOS. No browser or
+    /// redirect is involved: the ID token is verified against the provider's
+    /// published signing keys and a session is created in a single request.
+    ///
+    /// Native sign-in is switched on per provider with its nativeEnabled setting.
+    /// It is independent of the browser-based flow's enabled setting, which has no
+    /// effect on this endpoint. The token's audience must match the provider's
+    /// configured client ID or one of its native client IDs; tokens issued for any
+    /// other client ID are rejected. For Sign in with Apple, register your app's
+    /// bundle ID as a native client ID. For Google, the web client ID used by
+    /// Credential Manager is usually the configured client ID; add your Android
+    /// and iOS client IDs as native client IDs if your app requests tokens for
+    /// them.
+    ///
+    /// Pass the raw nonce used when requesting the ID token so it can be validated
+    /// against the token's nonce claim. When signing in with Apple, the nonce is
+    /// required: hash it with SHA-256 before passing it to the Apple SDK, and send
+    /// the raw value here - Apple tokens requested without a nonce are rejected.
+    /// For Google the nonce is optional: it is validated whenever the token
+    /// carries one, and ignored when the provider issued the token without one.
+    /// Apple only returns the user's name on the first authorization, and never
+    /// inside the ID token - capture it on the client and pass it via the name
+    /// parameter.
+    ///
+    /// If there is already an active session, the new session will be attached to
+    /// the logged-in account. If there are no active sessions, the server will
+    /// attempt to look for a user with the same email address as the verified
+    /// email received from the provider and attach the new session to the existing
+    /// user. If no matching user is found - the server will create a new user.
+    ///
+    /// This flow does not return provider refresh tokens. You may pass an access
+    /// token the provider handed your client, along with its lifetime, to store it
+    /// on the session - but Appwrite cannot renew it once it expires. If your app
+    /// needs long-lived access to provider APIs, use the browser-based OAuth2 flow
+    /// instead.
+    ///
+    /// A user is limited to 10 active sessions at a time by default. [Learn more
+    /// about session
+    /// limits](https://appwrite.io/docs/authentication-security#limits).
+    ///
+    /// - Parameters:
+    ///   - provider: AppwriteEnums.IdTokenProvider
+    ///   - idToken: String
+    ///   - nonce: String (optional)
+    ///   - accessToken: String (optional)
+    ///   - accessTokenExpiry: Int (optional)
+    ///   - name: String (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Session
+    ///
+    open func createIdTokenSession(
+        provider: AppwriteEnums.IdTokenProvider,
+        idToken: String,
+        nonce: String? = nil,
+        accessToken: String? = nil,
+        accessTokenExpiry: Int? = nil,
+        name: String? = nil
+    ) async throws -> AppwriteModels.Session {
+        let apiPath: String = "/account/sessions/id-token"
 
+        let apiParams: [String: Any?] = [
+            "provider": provider.rawValue,
+            "idToken": idToken,
+            "nonce": nonce,
+            "accessToken": accessToken,
+            "accessTokenExpiry": accessTokenExpiry,
+            "name": name,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Session = { response in
+            return AppwriteModels.Session.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
     ///
     /// Use this endpoint to create a session from token. Provide the **userId**
     /// and **secret** parameters from the successful response of authentication
@@ -1647,13 +2313,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1668,30 +2334,29 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Allow the user to login to their account using the OAuth2 provider of their
     /// choice. Each OAuth2 provider should be enabled from the Appwrite console
     /// first. Use the success and failure arguments to provide a redirect URL's
     /// back to your app when login is completed.
-    /// 
+    ///
     /// If there is already an active session, the new session will be attached to
     /// the logged-in account. If there are no active sessions, the server will
     /// attempt to look for a user with the same email address as the email
     /// received from the OAuth2 provider and attach the new session to the
     /// existing user. If no matching user is found - the server will create a new
     /// user.
-    /// 
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
-    /// 
     ///
     /// - Parameters:
     ///   - provider: AppwriteEnums.OAuthProvider
     ///   - success: String (optional)
     ///   - failure: String (optional)
     ///   - scopes: [String] (optional)
+    ///   - state: String (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: Bool
     ///
@@ -1700,16 +2365,23 @@ open class Account: Service {
         provider: AppwriteEnums.OAuthProvider,
         success: String? = nil,
         failure: String? = nil,
-        scopes: [String]? = nil
+        scopes: [String]? = nil,
+        state: String? = nil
     ) async throws -> Bool {
         let apiPath: String = "/account/sessions/oauth2/{provider}"
-            .replacingOccurrences(of: "{provider}", with: provider.rawValue)
+            .replacingOccurrences(of: "{provider}", with: try Client.encodePath(provider.rawValue))
 
         let apiParams: [String: Any?] = [
             "success": success,
             "failure": failure,
             "scopes": scopes,
-            "project": client.config["project"]
+            "state": state,
+            "project": client.config["project"],
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "text/html",
         ]
 
         let query = "?\(client.parametersToQueryString(params: apiParams))"
@@ -1728,7 +2400,6 @@ open class Account: Service {
         return true
 
     }
-
     ///
     /// Use this endpoint to create a session from token. Provide the **userId**
     /// and **secret** parameters from the successful response of authentication
@@ -1749,13 +2420,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1770,7 +2441,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to create a session from token. Provide the **userId**
     /// and **secret** parameters from the successful response of authentication
@@ -1790,13 +2460,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1811,7 +2481,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to get a logged in user's session using a Session ID.
     /// Inputting 'current' will return the current session being used.
@@ -1824,14 +2493,18 @@ open class Account: Service {
     open func getSession(
         sessionId: String
     ) async throws -> AppwriteModels.Session {
+        if sessionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"sessionId\"")
+        }
+
         let apiPath: String = "/account/sessions/{sessionId}"
-            .replacingOccurrences(of: "{sessionId}", with: sessionId)
+            .replacingOccurrences(of: "{sessionId}", with: try Client.encodePath(sessionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1846,7 +2519,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to extend a session's length. Extending a session is
     /// useful when session expiry is short. If the session was created using an
@@ -1860,15 +2532,19 @@ open class Account: Service {
     open func updateSession(
         sessionId: String
     ) async throws -> AppwriteModels.Session {
+        if sessionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"sessionId\"")
+        }
+
         let apiPath: String = "/account/sessions/{sessionId}"
-            .replacingOccurrences(of: "{sessionId}", with: sessionId)
+            .replacingOccurrences(of: "{sessionId}", with: try Client.encodePath(sessionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Session = { response in
@@ -1883,7 +2559,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Logout the user. Use 'current' as the session ID to logout on this device,
     /// use a session ID to logout on another device. If you're looking to logout
@@ -1899,23 +2574,28 @@ open class Account: Service {
     open func deleteSession(
         sessionId: String
     ) async throws -> Any {
+        if sessionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"sessionId\"")
+        }
+
         let apiPath: String = "/account/sessions/{sessionId}"
-            .replacingOccurrences(of: "{sessionId}", with: sessionId)
+            .replacingOccurrences(of: "{sessionId}", with: try Client.encodePath(sessionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Block the currently logged in user account. Behind the scene, the user
     /// record is not deleted but permanently blocked from any access. To
@@ -1934,7 +2614,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.User<T> = { response in
@@ -1958,44 +2638,51 @@ open class Account: Service {
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.User<T>
     ///
-    open func updateStatus(
-    ) async throws -> AppwriteModels.User<[String: AnyCodable]> {
+    open func updateStatus() async throws -> AppwriteModels.User<[String: AnyCodable]> {
         return try await updateStatus(
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Use this endpoint to register a device for push notifications. Provide a
     /// target ID (custom or generated using ID.unique()), a device identifier
     /// (usually a device token), and optionally specify which provider should send
     /// notifications to this target. The target is automatically linked to the
-    /// current session and includes device information like brand and model.
+    /// current session and includes device information like brand and model. A
+    /// session holds one push target per provider, so if one already exists this
+    /// endpoint updates and returns that target instead of creating a second one,
+    /// and a device that rotates its token is never notified twice.
     ///
     /// - Parameters:
     ///   - targetId: String
     ///   - identifier: String
     ///   - providerId: String (optional)
+    ///   - bundleId: String (optional)
+    ///   - environment: String (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Target
     ///
     open func createPushTarget(
         targetId: String,
         identifier: String,
-        providerId: String? = nil
+        providerId: String? = nil,
+        bundleId: String? = nil,
+        environment: String? = nil
     ) async throws -> AppwriteModels.Target {
         let apiPath: String = "/account/targets/push"
 
         let apiParams: [String: Any?] = [
             "targetId": targetId,
             "identifier": identifier,
-            "providerId": providerId
+            "providerId": providerId,
+            "bundleId": bundleId,
+            "environment": environment,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Target = { response in
@@ -2010,7 +2697,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Update the currently logged in user's push notification target. You can
     /// modify the target's identifier (device token) and provider ID (token,
@@ -2021,24 +2707,34 @@ open class Account: Service {
     /// - Parameters:
     ///   - targetId: String
     ///   - identifier: String
+    ///   - bundleId: String (optional)
+    ///   - environment: String (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Target
     ///
     open func updatePushTarget(
         targetId: String,
-        identifier: String
+        identifier: String,
+        bundleId: String? = nil,
+        environment: String? = nil
     ) async throws -> AppwriteModels.Target {
+        if targetId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"targetId\"")
+        }
+
         let apiPath: String = "/account/targets/{targetId}/push"
-            .replacingOccurrences(of: "{targetId}", with: targetId)
+            .replacingOccurrences(of: "{targetId}", with: try Client.encodePath(targetId))
 
         let apiParams: [String: Any?] = [
-            "identifier": identifier
+            "identifier": identifier,
+            "bundleId": bundleId,
+            "environment": environment,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Target = { response in
@@ -2053,7 +2749,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Delete a push notification target for the currently logged in user. After
     /// deletion, the device will no longer receive push notifications. The target
@@ -2067,23 +2762,28 @@ open class Account: Service {
     open func deletePushTarget(
         targetId: String
     ) async throws -> Any {
+        if targetId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"targetId\"")
+        }
+
         let apiPath: String = "/account/targets/{targetId}/push"
-            .replacingOccurrences(of: "{targetId}", with: targetId)
+            .replacingOccurrences(of: "{targetId}", with: try Client.encodePath(targetId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Sends the user an email with a secret key for creating a session. If the
     /// email address has never been used, a **new account is created** using the
@@ -2094,11 +2794,10 @@ open class Account: Service {
     /// /v1/account/sessions/token](https://appwrite.io/docs/references/cloud/client-web/account#createSession)
     /// endpoint to complete the login process. The secret sent to the user's email
     /// is valid for 15 minutes.
-    /// 
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
-    /// 
     ///
     /// - Parameters:
     ///   - userId: String
@@ -2117,13 +2816,13 @@ open class Account: Service {
         let apiParams: [String: Any?] = [
             "userId": userId,
             "email": email,
-            "phrase": phrase
+            "phrase": phrase,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2138,7 +2837,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Sends the user an email with a secret key for creating a session. If the
     /// provided user ID has not been registered, a new user will be created. When
@@ -2149,11 +2847,10 @@ open class Account: Service {
     /// /v1/account/sessions/token](https://appwrite.io/docs/references/cloud/client-web/account#createSession)
     /// endpoint to complete the login process. The link sent to the user's email
     /// address is valid for 1 hour.
-    /// 
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
-    /// 
     ///
     /// - Parameters:
     ///   - userId: String
@@ -2175,13 +2872,13 @@ open class Account: Service {
             "userId": userId,
             "email": email,
             "url": url,
-            "phrase": phrase
+            "phrase": phrase,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2196,19 +2893,22 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Allow the user to login to their account using the OAuth2 provider of their
     /// choice. Each OAuth2 provider should be enabled from the Appwrite console
     /// first. Use the success and failure arguments to provide a redirect URL's
-    /// back to your app when login is completed. 
-    /// 
+    /// back to your app when login is completed.
+    ///
     /// If authentication succeeds, `userId` and `secret` of a token will be
     /// appended to the success URL as query parameters. These can be used to
     /// create a new session using the [Create
     /// session](https://appwrite.io/docs/references/cloud/client-web/account#createSession)
     /// endpoint.
-    /// 
+    ///
+    /// If there is already an active session, the OAuth2 identity is attached to
+    /// the logged-in account and that session stays active until the token is
+    /// exchanged for a new one.
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
@@ -2218,6 +2918,7 @@ open class Account: Service {
     ///   - success: String (optional)
     ///   - failure: String (optional)
     ///   - scopes: [String] (optional)
+    ///   - state: String (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: Bool
     ///
@@ -2226,16 +2927,23 @@ open class Account: Service {
         provider: AppwriteEnums.OAuthProvider,
         success: String? = nil,
         failure: String? = nil,
-        scopes: [String]? = nil
+        scopes: [String]? = nil,
+        state: String? = nil
     ) async throws -> Bool {
         let apiPath: String = "/account/tokens/oauth2/{provider}"
-            .replacingOccurrences(of: "{provider}", with: provider.rawValue)
+            .replacingOccurrences(of: "{provider}", with: try Client.encodePath(provider.rawValue))
 
         let apiParams: [String: Any?] = [
             "success": success,
             "failure": failure,
             "scopes": scopes,
-            "project": client.config["project"]
+            "state": state,
+            "project": client.config["project"],
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "accept": "text/html",
         ]
 
         let query = "?\(client.parametersToQueryString(params: apiParams))"
@@ -2254,7 +2962,87 @@ open class Account: Service {
         return true
 
     }
+    ///
+    /// Start signing in with a passkey. No email or user ID is needed: pass the
+    /// returned `publicKey` options to `navigator.credentials.get()` and the user
+    /// picks one of their passkeys. Then call [Update passkey
+    /// token](/docs/references/cloud/client-web/account#updatePasskeyToken) with
+    /// the credential to receive a token, and exchange it with [Create
+    /// session](/docs/references/cloud/client-web/account#createSession). The
+    /// challenge expires after 5 minutes.
+    ///
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.PasskeyChallenge
+    ///
+    open func createPasskeyToken() async throws -> AppwriteModels.PasskeyChallenge {
+        let apiPath: String = "/account/tokens/passkey"
 
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.PasskeyChallenge = { response in
+            return AppwriteModels.PasskeyChallenge.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Complete a passkey sign-in started with [Create passkey
+    /// token](/docs/references/cloud/client-web/account#createPasskeyToken). Pass
+    /// the challenge ID and the JSON form of the credential returned by
+    /// `navigator.credentials.get()`, for example `credential.toJSON()`. The
+    /// returned token includes its secret and expires after 1 minute: exchange it
+    /// for a session with [Create
+    /// session](/docs/references/cloud/client-web/account#createSession). Passkeys
+    /// require user verification, so the session also satisfies MFA. Each
+    /// challenge can only be used once.
+    ///
+    /// - Parameters:
+    ///   - challengeId: String
+    ///   - credential: Any
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.TokenSecret
+    ///
+    open func updatePasskeyToken(
+        challengeId: String,
+        credential: Any
+    ) async throws -> AppwriteModels.TokenSecret {
+        let apiPath: String = "/account/tokens/passkey"
+
+        let apiParams: [String: Any?] = [
+            "challengeId": challengeId,
+            "credential": credential,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.TokenSecret = { response in
+            return AppwriteModels.TokenSecret.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "PUT",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
     ///
     /// Sends the user an SMS with a secret key for creating a session. If the
     /// provided user ID has not be registered, a new user will be created. Use the
@@ -2262,7 +3050,7 @@ open class Account: Service {
     /// /v1/account/sessions/token](https://appwrite.io/docs/references/cloud/client-web/account#createSession)
     /// endpoint to complete the login process. The secret sent to the user's phone
     /// is valid for 15 minutes.
-    /// 
+    ///
     /// A user is limited to 10 active sessions at a time by default. [Learn more
     /// about session
     /// limits](https://appwrite.io/docs/authentication-security#limits).
@@ -2281,13 +3069,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "phone": phone
+            "phone": phone,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2302,7 +3090,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to send a verification message to your user email address
     /// to confirm they are the valid owners of that address. Both the **userId**
@@ -2313,12 +3100,11 @@ open class Account: Service {
     /// parameters. Learn more about how to [complete the verification
     /// process](https://appwrite.io/docs/references/cloud/client-web/account#updateVerification).
     /// The verification link sent to the user's email address is valid for 7 days.
-    /// 
+    ///
     /// Please note that in order to avoid a [Redirect
     /// Attack](https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.md),
     /// the only valid redirect URLs are the ones from domains you have set when
     /// adding your platforms in the console interface.
-    /// 
     ///
     /// - Parameters:
     ///   - url: String
@@ -2337,7 +3123,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2352,7 +3138,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to send a verification message to your user email address
     /// to confirm they are the valid owners of that address. Both the **userId**
@@ -2363,12 +3148,11 @@ open class Account: Service {
     /// parameters. Learn more about how to [complete the verification
     /// process](https://appwrite.io/docs/references/cloud/client-web/account#updateVerification).
     /// The verification link sent to the user's email address is valid for 7 days.
-    /// 
+    ///
     /// Please note that in order to avoid a [Redirect
     /// Attack](https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.md),
     /// the only valid redirect URLs are the ones from domains you have set when
     /// adding your platforms in the console interface.
-    /// 
     ///
     /// - Parameters:
     ///   - url: String
@@ -2388,7 +3172,7 @@ open class Account: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2403,7 +3187,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to complete the user email verification process. Use both
     /// the **userId** and **secret** parameters that were attached to your app URL
@@ -2424,13 +3207,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2445,7 +3228,6 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
     /// Use this endpoint to complete the user email verification process. Use both
     /// the **userId** and **secret** parameters that were attached to your app URL
@@ -2467,13 +3249,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2488,30 +3270,39 @@ open class Account: Service {
             converter: converter
         )
     }
-
     ///
-    /// Use this endpoint to send a verification SMS to the currently logged in
-    /// user. This endpoint is meant for use after updating a user's phone number
-    /// using the
-    /// [accountUpdatePhone](https://appwrite.io/docs/references/cloud/client-web/account#updatePhone)
-    /// endpoint. Learn more about how to [complete the verification
-    /// process](https://appwrite.io/docs/references/cloud/client-web/account#updatePhoneVerification).
-    /// The verification code sent to the user's phone number is valid for 15
-    /// minutes.
+    /// Use this endpoint to send a 6-digit verification code to the currently
+    /// logged in user's email address. Unlike
+    /// [createEmailVerification](https://appwrite.io/docs/references/cloud/client-web/account#createEmailVerification),
+    /// this method requires no redirect URL, which makes it suitable for mobile
+    /// and desktop apps that cannot host a verification page. Learn more about how
+    /// to [complete the verification
+    /// process](https://appwrite.io/docs/references/cloud/client-web/account#updateEmailVerificationOTP).
+    /// The code sent to the user's email address is valid for 15 minutes.
     ///
+    /// Enable the **phrase** parameter to include a randomly generated security
+    /// phrase in both the email and the response. Showing that phrase in your app
+    /// lets the user confirm the email genuinely came from your request, which
+    /// helps protect against phishing.
+    ///
+    /// - Parameters:
+    ///   - phrase: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Token
     ///
-    open func createPhoneVerification(
+    open func createEmailVerificationOTP(
+        phrase: Bool? = nil
     ) async throws -> AppwriteModels.Token {
-        let apiPath: String = "/account/verifications/phone"
+        let apiPath: String = "/account/verifications/email/otp"
 
-        let apiParams: [String: Any] = [:]
+        let apiParams: [String: Any?] = [
+            "phrase": phrase
+        ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2526,7 +3317,85 @@ open class Account: Service {
             converter: converter
         )
     }
+    ///
+    /// Use this endpoint to complete the user email verification process using the
+    /// 6-digit code that was emailed by
+    /// [createEmailVerificationOTP](https://appwrite.io/docs/references/cloud/client-web/account#createEmailVerificationOTP).
+    /// Pass the **userId** of the user being verified along with the **secret**
+    /// code from the email. If confirmed, this route will return a 200 status code
+    /// and the code is consumed.
+    ///
+    /// - Parameters:
+    ///   - userId: String
+    ///   - secret: String
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Token
+    ///
+    open func updateEmailVerificationOTP(
+        userId: String,
+        secret: String
+    ) async throws -> AppwriteModels.Token {
+        let apiPath: String = "/account/verifications/email/otp"
 
+        let apiParams: [String: Any?] = [
+            "userId": userId,
+            "secret": secret,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Token = { response in
+            return AppwriteModels.Token.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "PUT",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+    ///
+    /// Use this endpoint to send a verification SMS to the currently logged in
+    /// user. This endpoint is meant for use after updating a user's phone number
+    /// using the
+    /// [accountUpdatePhone](https://appwrite.io/docs/references/cloud/client-web/account#updatePhone)
+    /// endpoint. Learn more about how to [complete the verification
+    /// process](https://appwrite.io/docs/references/cloud/client-web/account#updatePhoneVerification).
+    /// The verification code sent to the user's phone number is valid for 15
+    /// minutes.
+    ///
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.Token
+    ///
+    open func createPhoneVerification() async throws -> AppwriteModels.Token {
+        let apiPath: String = "/account/verifications/phone"
+
+        let apiParams: [String: Any] = [:]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.Token = { response in
+            return AppwriteModels.Token.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
     ///
     /// Use this endpoint to complete the user phone verification process. Use the
     /// **userId** and **secret** that were sent to your user's phone number to
@@ -2547,13 +3416,13 @@ open class Account: Service {
 
         let apiParams: [String: Any?] = [
             "userId": userId,
-            "secret": secret
+            "secret": secret,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Token = { response in
@@ -2568,6 +3437,4 @@ open class Account: Service {
             converter: converter
         )
     }
-
-
 }

@@ -1,11 +1,11 @@
-import AsyncHTTPClient
-import Foundation
-import NIO
-import JSONCodable
 import AppwriteEnums
 import AppwriteModels
+import AsyncHTTPClient
+import Foundation
+import JSONCodable
+import NIO
 
-/// 
+/// The TablesDB service allows you to create structured tables of columns, query and filter lists of rows
 open class TablesDB: Service {
 
     ///
@@ -13,21 +13,24 @@ open class TablesDB: Service {
     ///
     /// - Parameters:
     ///   - queries: [String] (optional)
+    ///   - total: Bool (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.TransactionList
     ///
     open func listTransactions(
-        queries: [String]? = nil
+        queries: [String]? = nil,
+        total: Bool? = nil
     ) async throws -> AppwriteModels.TransactionList {
         let apiPath: String = "/tablesdb/transactions"
 
         let apiParams: [String: Any?] = [
-            "queries": queries
+            "queries": queries,
+            "total": total,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.TransactionList = { response in
@@ -42,7 +45,6 @@ open class TablesDB: Service {
             converter: converter
         )
     }
-
     ///
     /// Create a new transaction.
     ///
@@ -63,7 +65,7 @@ open class TablesDB: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -78,7 +80,6 @@ open class TablesDB: Service {
             converter: converter
         )
     }
-
     ///
     /// Get a transaction by its unique ID.
     ///
@@ -90,14 +91,18 @@ open class TablesDB: Service {
     open func getTransaction(
         transactionId: String
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/tablesdb/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -112,7 +117,6 @@ open class TablesDB: Service {
             converter: converter
         )
     }
-
     ///
     /// Update a transaction, to either commit or roll back its operations.
     ///
@@ -128,18 +132,22 @@ open class TablesDB: Service {
         commit: Bool? = nil,
         rollback: Bool? = nil
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/tablesdb/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any?] = [
             "commit": commit,
-            "rollback": rollback
+            "rollback": rollback,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -154,7 +162,6 @@ open class TablesDB: Service {
             converter: converter
         )
     }
-
     ///
     /// Delete a transaction by its unique ID.
     ///
@@ -166,38 +173,47 @@ open class TablesDB: Service {
     open func deleteTransaction(
         transactionId: String
     ) async throws -> Any {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/tablesdb/transactions/{transactionId}"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any] = [:]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Create multiple operations in a single transaction.
     ///
     /// - Parameters:
     ///   - transactionId: String
-    ///   - operations: [Any] (optional)
+    ///   - operations: [AnyCodable] (optional)
     /// - Throws: Exception if the request fails
     /// - Returns: AppwriteModels.Transaction
     ///
     open func createOperations(
         transactionId: String,
-        operations: [Any]? = nil
+        operations: [AnyCodable]? = nil
     ) async throws -> AppwriteModels.Transaction {
+        if transactionId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"transactionId\"")
+        }
+
         let apiPath: String = "/tablesdb/transactions/{transactionId}/operations"
-            .replacingOccurrences(of: "{transactionId}", with: transactionId)
+            .replacingOccurrences(of: "{transactionId}", with: try Client.encodePath(transactionId))
 
         let apiParams: [String: Any?] = [
             "operations": operations
@@ -206,7 +222,7 @@ open class TablesDB: Service {
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Transaction = { response in
@@ -221,10 +237,17 @@ open class TablesDB: Service {
             converter: converter
         )
     }
-
     ///
     /// Get a list of all the user's rows in a given table. You can use the query
     /// params to filter your results.
+    ///
+    /// Rows returned by aggregate, groupBy or distinct queries hold only the
+    /// columns they select, group or aggregate, typed as a row types them, with a
+    /// joined column named by its join alias (`alias.column`). The response omits
+    /// their `$id`, `$sequence`, `$createdAt`, `$updatedAt`, `$permissions`,
+    /// `$databaseId` and `$tableId` unless they select or group it, and those of a
+    /// right or full join row that no row of this table matched. SDK row models
+    /// fill omitted system columns with empty values.
     ///
     /// - Parameters:
     ///   - databaseId: String
@@ -245,20 +268,27 @@ open class TablesDB: Service {
         ttl: Int? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.RowList<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
 
         let apiParams: [String: Any?] = [
             "queries": queries,
             "transactionId": transactionId,
             "total": total,
-            "ttl": ttl
+            "ttl": ttl,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.RowList<T> = { response in
@@ -277,6 +307,14 @@ open class TablesDB: Service {
     ///
     /// Get a list of all the user's rows in a given table. You can use the query
     /// params to filter your results.
+    ///
+    /// Rows returned by aggregate, groupBy or distinct queries hold only the
+    /// columns they select, group or aggregate, typed as a row types them, with a
+    /// joined column named by its join alias (`alias.column`). The response omits
+    /// their `$id`, `$sequence`, `$createdAt`, `$updatedAt`, `$permissions`,
+    /// `$databaseId` and `$tableId` unless they select or group it, and those of a
+    /// right or full join row that no row of this table matched. SDK row models
+    /// fill omitted system columns with empty values.
     ///
     /// - Parameters:
     ///   - databaseId: String
@@ -306,7 +344,6 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Create a new Row. Before using this route, you should create a new table
     /// resource using either a [server
@@ -332,21 +369,28 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
 
         let apiParams: [String: Any?] = [
             "rowId": rowId,
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -396,7 +440,102 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
+    ///
+    /// Get a list of all the user's rows in a given table using a POST request.
+    /// This behaves identically to the list rows endpoint but accepts the queries
+    /// in the request body, allowing much larger `queries` arrays than can fit in
+    /// a URL query string.
+    ///
+    /// - Parameters:
+    ///   - databaseId: String
+    ///   - tableId: String
+    ///   - queries: [String] (optional)
+    ///   - transactionId: String (optional)
+    ///   - total: Bool (optional)
+    ///   - ttl: Int (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.RowList<T>
+    ///
+    open func createQuery<T>(
+        databaseId: String,
+        tableId: String,
+        queries: [String]? = nil,
+        transactionId: String? = nil,
+        total: Bool? = nil,
+        ttl: Int? = nil,
+        nestedType: T.Type
+    ) async throws -> AppwriteModels.RowList<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
 
+        let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/query"
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+
+        let apiParams: [String: Any?] = [
+            "queries": queries,
+            "transactionId": transactionId,
+            "total": total,
+            "ttl": ttl,
+        ]
+
+        let apiHeaders: [String: String] = [
+            "X-Appwrite-Project": client.config["project"] ?? "",
+            "content-type": "application/json",
+            "accept": "application/json",
+        ]
+
+        let converter: (Any) throws -> AppwriteModels.RowList<T> = { response in
+            return AppwriteModels.RowList.from(map: response as! [String: Any])
+        }
+
+        return try await client.call(
+            method: "POST",
+            path: apiPath,
+            headers: apiHeaders,
+            params: apiParams,
+            converter: converter
+        )
+    }
+
+    ///
+    /// Get a list of all the user's rows in a given table using a POST request.
+    /// This behaves identically to the list rows endpoint but accepts the queries
+    /// in the request body, allowing much larger `queries` arrays than can fit in
+    /// a URL query string.
+    ///
+    /// - Parameters:
+    ///   - databaseId: String
+    ///   - tableId: String
+    ///   - queries: [String] (optional)
+    ///   - transactionId: String (optional)
+    ///   - total: Bool (optional)
+    ///   - ttl: Int (optional)
+    /// - Throws: Exception if the request fails
+    /// - Returns: AppwriteModels.RowList<T>
+    ///
+    open func createQuery(
+        databaseId: String,
+        tableId: String,
+        queries: [String]? = nil,
+        transactionId: String? = nil,
+        total: Bool? = nil,
+        ttl: Int? = nil
+    ) async throws -> AppwriteModels.RowList<[String: AnyCodable]> {
+        return try await createQuery(
+            databaseId: databaseId,
+            tableId: tableId,
+            queries: queries,
+            transactionId: transactionId,
+            total: total,
+            ttl: ttl,
+            nestedType: [String: AnyCodable].self
+        )
+    }
     ///
     /// Get a row by its unique ID. This endpoint response returns a JSON object
     /// with the row data.
@@ -418,19 +557,29 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
 
         let apiParams: [String: Any?] = [
             "queries": queries,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -475,7 +624,6 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Create or update a Row. Before using this route, you should create a new
     /// table resource using either a [server
@@ -501,21 +649,31 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
 
         let apiParams: [String: Any?] = [
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -565,7 +723,6 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Update a row by its unique ID. Using the patch method you can pass only
     /// specific fields that will get updated.
@@ -589,21 +746,31 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
 
         let apiParams: [String: Any?] = [
             "data": data,
             "permissions": permissions,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -651,7 +818,6 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Delete a row by its unique ID.
     ///
@@ -669,10 +835,20 @@ open class TablesDB: Service {
         rowId: String,
         transactionId: String? = nil
     ) async throws -> Any {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
 
         let apiParams: [String: Any?] = [
             "transactionId": transactionId
@@ -680,16 +856,17 @@ open class TablesDB: Service {
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "accept": "application/json",
         ]
 
         return try await client.call(
             method: "DELETE",
             path: apiPath,
             headers: apiHeaders,
-            params: apiParams        )
+            params: apiParams
+        )
     }
-
     ///
     /// Decrement a specific column of a row by a given value.
     ///
@@ -714,22 +891,35 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+        if column.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"column\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}/{column}/decrement"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
-            .replacingOccurrences(of: "{column}", with: column)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
+            .replacingOccurrences(of: "{column}", with: try Client.encodePath(column))
 
         let apiParams: [String: Any?] = [
             "value": value,
             "min": min,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -779,7 +969,6 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
     ///
     /// Increment a specific column of a row by a given value.
     ///
@@ -804,22 +993,35 @@ open class TablesDB: Service {
         transactionId: String? = nil,
         nestedType: T.Type
     ) async throws -> AppwriteModels.Row<T> {
+        if databaseId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"databaseId\"")
+        }
+        if tableId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"tableId\"")
+        }
+        if rowId.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"rowId\"")
+        }
+        if column.isEmpty {
+            throw AppwriteError(message: "Missing required parameter: \"column\"")
+        }
+
         let apiPath: String = "/tablesdb/{databaseId}/tables/{tableId}/rows/{rowId}/{column}/increment"
-            .replacingOccurrences(of: "{databaseId}", with: databaseId)
-            .replacingOccurrences(of: "{tableId}", with: tableId)
-            .replacingOccurrences(of: "{rowId}", with: rowId)
-            .replacingOccurrences(of: "{column}", with: column)
+            .replacingOccurrences(of: "{databaseId}", with: try Client.encodePath(databaseId))
+            .replacingOccurrences(of: "{tableId}", with: try Client.encodePath(tableId))
+            .replacingOccurrences(of: "{rowId}", with: try Client.encodePath(rowId))
+            .replacingOccurrences(of: "{column}", with: try Client.encodePath(column))
 
         let apiParams: [String: Any?] = [
             "value": value,
             "max": max,
-            "transactionId": transactionId
+            "transactionId": transactionId,
         ]
 
         let apiHeaders: [String: String] = [
             "X-Appwrite-Project": client.config["project"] ?? "",
             "content-type": "application/json",
-            "accept": "application/json"
+            "accept": "application/json",
         ]
 
         let converter: (Any) throws -> AppwriteModels.Row<T> = { response in
@@ -869,6 +1071,4 @@ open class TablesDB: Service {
             nestedType: [String: AnyCodable].self
         )
     }
-
-
 }
