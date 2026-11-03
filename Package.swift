@@ -23,7 +23,10 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.36.2"),
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.104.0"),
+        // swift-nio 2.104.0 makes ByteToMessageHandler generic over ~Copyable decoders,
+        // on iOS < 18 the runtime can't resolve its ChannelHandler and it just crashes
+        // Temporary: drop this pin once swift-nio ships the fix.
+        .package(url: "https://github.com/apple/swift-nio.git", exact: "2.103.0"),
         // swift-distributed-tracing 1.6.0 makes ServiceContext ambiguous inside async-http-client.
         .package(url: "https://github.com/apple/swift-distributed-tracing.git", "1.0.0"..<"1.6.0"),
         .package(url: "https://github.com/swift-server-community/mqtt-nio.git", from: "2.13.0"),
