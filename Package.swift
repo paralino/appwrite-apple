@@ -22,7 +22,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../async-http-client"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.36.2"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.104.0"),
         // swift-distributed-tracing 1.6.0 makes ServiceContext ambiguous inside async-http-client.
         .package(url: "https://github.com/apple/swift-distributed-tracing.git", "1.0.0"..<"1.6.0"),
